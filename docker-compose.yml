@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: fridgeapp-db
+    environment:
+      POSTGRES_DB: fridgeapp
+      POSTGRES_USER: ${DB_ADMIN_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:-postgres}
+      DB_APP_USER: ${DB_APP_USER:-fridgeapp_app}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD}
+      DB_MIGRATOR_USER: ${DB_MIGRATOR_USER:-fridgeapp_migrator}
+      DB_MIGRATOR_PASSWORD: ${DB_MIGRATOR_PASSWORD}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # api・web サービスは backend/frontend 実装後（ステップ12以降）に追加
+
+volumes:
+  postgres_data:

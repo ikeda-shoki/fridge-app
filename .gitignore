@@ -1,0 +1,39 @@
+# 環境変数・機密情報
+.env
+.env.local
+.env.production
+
+# Spring Boot ローカル設定
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-secret.yml
+
+# 証明書・鍵
+*.pem
+*.key
+*.p12
+*.jks
+
+# ローカル画像ストレージ
+backend/storage/
+
+# Java / Maven
+backend/target/
+*.class
+*.jar
+*.war
+
+# Node.js / フロントエンド
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db

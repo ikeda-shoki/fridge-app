@@ -1,0 +1,38 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fridgeapp}
+    username: ${DB_APP_USER:fridgeapp_app}
+    password: ${DB_APP_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fridgeapp}
+    user: ${DB_MIGRATOR_USER:fridgeapp_migrator}
+    password: ${DB_MIGRATOR_PASSWORD:}
+    locations: classpath:db/migration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    issuer: ${JWT_ISSUER:fridge-app}
+    audience: ${JWT_AUDIENCE:fridge-app-web}
+    access-token-expiry: PT30M
+    refresh-token-expiry: P14D
+  google:
+    client-id: ${GOOGLE_OAUTH_CLIENT_ID}
+  cookie:
+    secure: ${COOKIE_SECURE:false}
+
+logging:
+  level:
+    root: INFO
+    com.example.fridgeapp: DEBUG
+    org.flywaydb: INFO

@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main", "feature/**" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  backend:
+    name: Backend (Java 21 / Maven)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: fridgeapp
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/fridgeapp
+      DB_APP_USER: postgres
+      DB_APP_PASSWORD: postgres
+      DB_MIGRATOR_USER: postgres
+      DB_MIGRATOR_PASSWORD: postgres
+      JWT_SECRET: ci-test-secret-key-that-is-at-least-32-characters
+      JWT_ISSUER: fridge-app
+      JWT_AUDIENCE: fridge-app-web
+      GOOGLE_OAUTH_CLIENT_ID: ci-test-client-id
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Spotless check
+        run: ./mvnw spotless:check -f backend/pom.xml
+
+      - name: Build & Test
+        run: ./mvnw verify -f backend/pom.xml
