@@ -48,7 +48,9 @@ jobs:
           cache: maven
 
       - name: Spotless check
-        run: ./mvnw spotless:check -f backend/pom.xml
+        working-directory: backend
+        run: ./mvnw spotless:check
 
       - name: Build & Test
-        run: ./mvnw verify -f backend/pom.xml
+        working-directory: backend
+        run: ./mvnw verify
