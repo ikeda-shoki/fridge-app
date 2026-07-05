@@ -1,32 +1,40 @@
 #!/bin/sh
 # Maven Wrapper script
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements. See the NOTICE file for details.
 set -e
 
+WRAPPER_LAUNCHER="org.apache.maven.wrapper.MavenWrapperMain"
 BASEDIR=$(cd "$(dirname "$0")" && pwd)
 WRAPPER_JAR="$BASEDIR/.mvn/wrapper/maven-wrapper.jar"
 WRAPPER_PROPERTIES="$BASEDIR/.mvn/wrapper/maven-wrapper.properties"
 
-# Detect Java
 if [ -n "$JAVA_HOME" ]; then
     JAVA_EXEC="$JAVA_HOME/bin/java"
 else
     JAVA_EXEC="java"
 fi
 
-# Download maven-wrapper.jar if not present
+# Read wrapperUrl from properties file
+DOWNLOAD_URL=""
+while IFS="=" read -r key value; do
+    case "$key" in
+        wrapperUrl) DOWNLOAD_URL="$value" ;;
+    esac
+done < "$WRAPPER_PROPERTIES"
+
 if [ ! -f "$WRAPPER_JAR" ]; then
-    DOWNLOAD_URL=$(grep "wrapperUrl" "$WRAPPER_PROPERTIES" | sed 's/wrapperUrl=//')
     echo "Downloading Maven Wrapper from: $DOWNLOAD_URL"
     if command -v curl > /dev/null; then
         curl -fsSL -o "$WRAPPER_JAR" "$DOWNLOAD_URL"
     elif command -v wget > /dev/null; then
         wget -q -O "$WRAPPER_JAR" "$DOWNLOAD_URL"
     else
-        echo "ERROR: curl or wget is required to bootstrap mvnw" >&2
+        echo "ERROR: curl or wget required" >&2
         exit 1
     fi
 fi
 
-exec "$JAVA_EXEC" -jar "$WRAPPER_JAR" "$@"
+exec "$JAVA_EXEC" \
+    -classpath "$WRAPPER_JAR" \
+    "-Dmaven.multiModuleProjectDirectory=$BASEDIR" \
+    "$WRAPPER_LAUNCHER" \
+    "$@"
