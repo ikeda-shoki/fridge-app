@@ -30,6 +30,8 @@ app:
     client-id: ${GOOGLE_OAUTH_CLIENT_ID}
   cookie:
     secure: ${COOKIE_SECURE:false}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
 logging:
   level:
