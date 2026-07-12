@@ -32,3 +32,6 @@ app:
     secure: false
   cors:
     allowed-origins: http://localhost:5173
+  storage:
+    type: local
+    local-path: ${java.io.tmpdir}/fridgeapp-test-storage

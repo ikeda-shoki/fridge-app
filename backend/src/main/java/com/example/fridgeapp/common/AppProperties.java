@@ -12,7 +12,11 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "app")
 @Validated
 public record AppProperties(
-    @Valid Jwt jwt, @Valid Google google, @Valid Cookie cookie, @Valid Cors cors) {
+    @Valid Jwt jwt,
+    @Valid Google google,
+    @Valid Cookie cookie,
+    @Valid Cors cors,
+    @Valid Storage storage) {
 
   public record Jwt(
       @NotBlank String secret,
@@ -26,4 +30,6 @@ public record AppProperties(
   public record Cookie(boolean secure) {}
 
   public record Cors(@NotEmpty List<String> allowedOrigins) {}
+
+  public record Storage(@NotBlank String type, @NotBlank String localPath) {}
 }
