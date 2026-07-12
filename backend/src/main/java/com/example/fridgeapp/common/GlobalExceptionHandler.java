@@ -46,6 +46,7 @@ public class GlobalExceptionHandler {
           case GROUP_NOT_FOUND, TARGET_USER_NOT_GROUP_MEMBER -> HttpStatus.NOT_FOUND;
           case NOT_GROUP_MEMBER, NOT_GROUP_OWNER -> HttpStatus.FORBIDDEN;
           case ALREADY_GROUP_MEMBER, LAST_OWNER_CANNOT_LEAVE -> HttpStatus.CONFLICT;
+          case INVITATION_CODE_LOCKED, JOIN_RATE_LIMITED -> HttpStatus.TOO_MANY_REQUESTS;
           default -> HttpStatus.BAD_REQUEST;
         };
     return ResponseEntity.status(status)

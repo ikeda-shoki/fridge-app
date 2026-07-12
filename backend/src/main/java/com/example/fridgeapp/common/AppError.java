@@ -19,6 +19,11 @@ public enum AppError {
   ALREADY_GROUP_MEMBER("既にこのグループのメンバーです"),
   TARGET_USER_NOT_GROUP_MEMBER("譲渡先のユーザーはこのグループのメンバーではありません"),
   LAST_OWNER_CANNOT_LEAVE("唯一のオーナーは脱退できません。オーナーを譲渡するかグループを削除してください"),
+  INVALID_INVITATION_CODE("無効な招待コードです"),
+  INVITATION_CODE_EXPIRED("招待コードの有効期限が切れています"),
+  INVITATION_CODE_ALREADY_USED("この招待コードは既に使用されています"),
+  INVITATION_CODE_LOCKED("この招待コードはロックされています。しばらくたってから再度お試しください"),
+  JOIN_RATE_LIMITED("リクエストが多すぎます。しばらくたってから再度お試しください"),
 
   // ── Fridge Items ──────────────────────────────────────────────────────
   // フル CRUD 関連のエラーはステップ9で追加予定。以下はステップ6の画像アップロードのみで使用。
