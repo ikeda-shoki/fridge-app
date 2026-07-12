@@ -1,6 +1,7 @@
 package com.example.fridgeapp.common;
 
 import com.example.fridgeapp.auth.AuthException;
+import com.example.fridgeapp.fridge.FridgeItemException;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -22,6 +24,27 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleAuthException(AuthException ex) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
         .body(new ErrorResponse(ex.getCode(), ex.getMessage()));
+  }
+
+  @ExceptionHandler(FridgeItemException.class)
+  public ResponseEntity<ErrorResponse> handleFridgeItemException(FridgeItemException ex) {
+    HttpStatus status =
+        switch (ex.getError()) {
+          case FRIDGE_ITEM_NOT_FOUND -> HttpStatus.NOT_FOUND;
+          case IMAGE_PROCESSING_FAILED -> HttpStatus.UNPROCESSABLE_CONTENT;
+          default -> HttpStatus.BAD_REQUEST;
+        };
+    return ResponseEntity.status(status)
+        .body(new ErrorResponse(ex.getError().name(), ex.getMessage()));
+  }
+
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
+      MaxUploadSizeExceededException ex) {
+    return ResponseEntity.badRequest()
+        .body(
+            new ErrorResponse(
+                AppError.IMAGE_TOO_LARGE.name(), AppError.IMAGE_TOO_LARGE.getMessage()));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
