@@ -1,8 +1,8 @@
 package com.example.fridgeapp.storage;
 
+import com.example.fridgeapp.common.AppError;
 import com.example.fridgeapp.common.AppProperties;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
@@ -24,7 +24,7 @@ public class LocalFileStorageService implements StorageService {
     try {
       Files.createDirectories(basePath);
     } catch (IOException e) {
-      throw new UncheckedIOException("ストレージディレクトリの作成に失敗しました", e);
+      throw new StorageException(AppError.STORAGE_DIRECTORY_CREATE_FAILED, e);
     }
   }
 
@@ -34,7 +34,7 @@ public class LocalFileStorageService implements StorageService {
     try {
       Files.write(basePath.resolve(fileName), content);
     } catch (IOException e) {
-      throw new UncheckedIOException("ファイルの保存に失敗しました", e);
+      throw new StorageException(AppError.STORAGE_WRITE_FAILED, e);
     }
     return fileName;
   }
@@ -43,12 +43,12 @@ public class LocalFileStorageService implements StorageService {
   public void delete(String path) {
     Path target = basePath.resolve(path).normalize();
     if (!target.startsWith(basePath)) {
-      throw new IllegalArgumentException("不正なパスです: " + path);
+      throw new StorageException(AppError.STORAGE_INVALID_PATH);
     }
     try {
       Files.deleteIfExists(target);
     } catch (IOException e) {
-      throw new UncheckedIOException("ファイルの削除に失敗しました", e);
+      throw new StorageException(AppError.STORAGE_DELETE_FAILED, e);
     }
   }
 }

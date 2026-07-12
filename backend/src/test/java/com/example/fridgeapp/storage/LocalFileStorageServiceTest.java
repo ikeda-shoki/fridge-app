@@ -3,6 +3,7 @@ package com.example.fridgeapp.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.fridgeapp.common.AppError;
 import com.example.fridgeapp.common.AppProperties;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,6 +54,8 @@ class LocalFileStorageServiceTest {
   @Test
   void deleteRejectsPathTraversalAttempt() {
     assertThatThrownBy(() -> storageService.delete("../outside.jpg"))
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(StorageException.class)
+        .extracting("error")
+        .isEqualTo(AppError.STORAGE_INVALID_PATH);
   }
 }

@@ -22,6 +22,12 @@ public enum AppError {
   IMAGE_TOO_LARGE("画像サイズが5MBを超えています"),
   IMAGE_PROCESSING_FAILED("画像の処理に失敗しました"),
 
+  // ── Storage ───────────────────────────────────────────────────────────
+  STORAGE_DIRECTORY_CREATE_FAILED("ストレージディレクトリの作成に失敗しました"),
+  STORAGE_WRITE_FAILED("ファイルの保存に失敗しました"),
+  STORAGE_DELETE_FAILED("ファイルの削除に失敗しました"),
+  STORAGE_INVALID_PATH("不正なパスです"),
+
 // ── Shopping List ─────────────────────────────────────────────────────
 // (ステップ10で追加予定)
 
