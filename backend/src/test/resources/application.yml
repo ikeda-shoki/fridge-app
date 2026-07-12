@@ -1,14 +1,10 @@
 spring:
+  # DataSource / Flyway の接続情報は Testcontainers の @ServiceConnection が実行時に注入する
+  # （AbstractIntegrationTest 参照）。本番 .env や共有 DB には依存しない。
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/fridgeapp}
-    username: ${DB_APP_USER:fridgeapp_app}
-    password: ${DB_APP_PASSWORD:}
     driver-class-name: org.postgresql.Driver
   flyway:
     enabled: true
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/fridgeapp}
-    user: ${DB_MIGRATOR_USER:fridgeapp_migrator}
-    password: ${DB_MIGRATOR_PASSWORD:}
     locations: classpath:db/migration
   jpa:
     hibernate:
