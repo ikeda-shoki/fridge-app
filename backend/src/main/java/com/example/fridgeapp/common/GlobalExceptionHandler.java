@@ -2,6 +2,7 @@ package com.example.fridgeapp.common;
 
 import com.example.fridgeapp.auth.AuthException;
 import com.example.fridgeapp.fridge.FridgeItemException;
+import com.example.fridgeapp.group.GroupException;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,19 @@ public class GlobalExceptionHandler {
         switch (ex.getError()) {
           case FRIDGE_ITEM_NOT_FOUND -> HttpStatus.NOT_FOUND;
           case IMAGE_PROCESSING_FAILED -> HttpStatus.UNPROCESSABLE_CONTENT;
+          default -> HttpStatus.BAD_REQUEST;
+        };
+    return ResponseEntity.status(status)
+        .body(new ErrorResponse(ex.getError().name(), ex.getMessage()));
+  }
+
+  @ExceptionHandler(GroupException.class)
+  public ResponseEntity<ErrorResponse> handleGroupException(GroupException ex) {
+    HttpStatus status =
+        switch (ex.getError()) {
+          case GROUP_NOT_FOUND, TARGET_USER_NOT_GROUP_MEMBER -> HttpStatus.NOT_FOUND;
+          case NOT_GROUP_MEMBER, NOT_GROUP_OWNER -> HttpStatus.FORBIDDEN;
+          case ALREADY_GROUP_MEMBER, LAST_OWNER_CANNOT_LEAVE -> HttpStatus.CONFLICT;
           default -> HttpStatus.BAD_REQUEST;
         };
     return ResponseEntity.status(status)
