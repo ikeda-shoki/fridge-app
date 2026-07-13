@@ -64,6 +64,14 @@ class FoodMasterControllerTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void searchTreatsLikeWildcardsAsLiteralCharacters() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/food-master/search").param("q", "%").with(authentication(auth)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$").isEmpty());
+  }
+
+  @Test
   void searchRequiresAuthentication() throws Exception {
     mockMvc
         .perform(get("/api/v1/food-master/search").param("q", "たま"))

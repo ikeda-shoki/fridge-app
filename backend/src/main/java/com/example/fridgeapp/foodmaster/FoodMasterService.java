@@ -1,11 +1,15 @@
 package com.example.fridgeapp.foodmaster;
 
 import java.util.List;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class FoodMasterService {
+
+  /** サジェストとして一度に返す最大件数。 */
+  private static final Limit SUGGEST_LIMIT = Limit.of(20);
 
   private final FoodMasterRepository foodMasterRepository;
 
@@ -20,9 +24,14 @@ public class FoodMasterService {
       return List.of();
     }
     return foodMasterRepository
-        .findTop20ByActiveTrueAndNameKanaStartingWithOrderByNameKanaAsc(trimmed)
+        .findActiveByNameKanaPrefix(escapeLikeWildcards(trimmed), SUGGEST_LIMIT)
         .stream()
         .map(FoodMasterResponse::from)
         .toList();
+  }
+
+  /** 検索語に含まれる LIKE のワイルドカードを、リテラル文字として扱わせるためにエスケープする。 */
+  private static String escapeLikeWildcards(String input) {
+    return input.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
   }
 }
