@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,12 +39,12 @@ public class InvitationService {
     if (!groupRepository.existsById(groupId)) {
       throw new GroupException(AppError.GROUP_NOT_FOUND);
     }
-    if (!groupMemberRepository.existsByGroupIdAndUserIdAndRole(groupId, userId, GroupRole.OWNER)) {
+    if (!groupMemberRepository.existsMemberWithRole(groupId, userId, GroupRole.OWNER)) {
       throw new GroupException(AppError.NOT_GROUP_OWNER);
     }
 
     invitationCodeRepository
-        .findByGroupIdAndUsedAtIsNull(groupId)
+        .findUnusedByGroupId(groupId)
         .ifPresent(
             existing -> {
               existing.expireNow();
@@ -65,7 +66,7 @@ public class InvitationService {
     Instant now = Instant.now();
 
     Optional<InvitationCode> maybeCode =
-        invitationCodeRepository.findTopByCodeOrderByCreatedAtDesc(code);
+        invitationCodeRepository.findLatestByCode(code, Limit.of(1));
     if (maybeCode.isEmpty()) {
       joinRateLimiter.recordFailure(clientIp);
       throw new GroupException(AppError.INVALID_INVITATION_CODE);
@@ -90,7 +91,7 @@ public class InvitationService {
     }
 
     UUID groupId = invitationCode.getGroupId();
-    if (groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)) {
+    if (groupMemberRepository.existsMember(groupId, userId)) {
       joinRateLimiter.recordSuccess(clientIp);
       throw new GroupException(AppError.ALREADY_GROUP_MEMBER);
     }
@@ -110,7 +111,7 @@ public class InvitationService {
   private String generateUniqueCode() {
     for (int attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++) {
       String candidate = invitationCodeGenerator.generate();
-      if (!invitationCodeRepository.existsByCodeAndUsedAtIsNull(candidate)) {
+      if (!invitationCodeRepository.existsUnusedByCode(candidate)) {
         return candidate;
       }
     }

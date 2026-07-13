@@ -66,7 +66,7 @@ public class GroupService {
     findGroup(groupId);
     GroupMember member = findMember(groupId, userId);
     if (member.getRole() == GroupRole.OWNER
-        && groupMemberRepository.countByGroupIdAndRole(groupId, GroupRole.OWNER) <= 1) {
+        && groupMemberRepository.countMembersWithRole(groupId, GroupRole.OWNER) <= 1) {
       throw new GroupException(AppError.LAST_OWNER_CANNOT_LEAVE);
     }
     groupMemberRepository.delete(member);
@@ -78,7 +78,7 @@ public class GroupService {
     assertOwner(groupId, requesterId);
     GroupMember target =
         groupMemberRepository
-            .findByGroupIdAndUserId(groupId, targetUserId)
+            .findMember(groupId, targetUserId)
             .orElseThrow(() -> new GroupException(AppError.TARGET_USER_NOT_GROUP_MEMBER));
     target.promoteToOwner();
     groupMemberRepository.save(target);
@@ -92,18 +92,18 @@ public class GroupService {
 
   private GroupMember findMember(UUID groupId, UUID userId) {
     return groupMemberRepository
-        .findByGroupIdAndUserId(groupId, userId)
+        .findMember(groupId, userId)
         .orElseThrow(() -> new GroupException(AppError.NOT_GROUP_MEMBER));
   }
 
   private void assertMember(UUID groupId, UUID userId) {
-    if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)) {
+    if (!groupMemberRepository.existsMember(groupId, userId)) {
       throw new GroupException(AppError.NOT_GROUP_MEMBER);
     }
   }
 
   private void assertOwner(UUID groupId, UUID userId) {
-    if (!groupMemberRepository.existsByGroupIdAndUserIdAndRole(groupId, userId, GroupRole.OWNER)) {
+    if (!groupMemberRepository.existsMemberWithRole(groupId, userId, GroupRole.OWNER)) {
       throw new GroupException(AppError.NOT_GROUP_OWNER);
     }
   }

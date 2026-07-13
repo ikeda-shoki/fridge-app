@@ -59,7 +59,7 @@ class GroupServiceTest {
     UUID groupId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupWithId(groupId)));
-    when(groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)).thenReturn(false);
+    when(groupMemberRepository.existsMember(groupId, userId)).thenReturn(false);
 
     assertThatThrownBy(() -> groupService.getGroupDetail(userId, groupId))
         .isInstanceOf(GroupException.class)
@@ -83,7 +83,7 @@ class GroupServiceTest {
     UUID groupId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupWithId(groupId)));
-    when(groupMemberRepository.existsByGroupIdAndUserIdAndRole(groupId, userId, GroupRole.OWNER))
+    when(groupMemberRepository.existsMemberWithRole(groupId, userId, GroupRole.OWNER))
         .thenReturn(false);
 
     assertThatThrownBy(() -> groupService.deleteGroup(userId, groupId))
@@ -98,7 +98,7 @@ class GroupServiceTest {
     UUID userId = UUID.randomUUID();
     Group group = groupWithId(groupId);
     when(groupRepository.findById(groupId)).thenReturn(Optional.of(group));
-    when(groupMemberRepository.existsByGroupIdAndUserIdAndRole(groupId, userId, GroupRole.OWNER))
+    when(groupMemberRepository.existsMemberWithRole(groupId, userId, GroupRole.OWNER))
         .thenReturn(true);
 
     groupService.deleteGroup(userId, groupId);
@@ -112,7 +112,7 @@ class GroupServiceTest {
     UUID userId = UUID.randomUUID();
     UUID memberUserId = UUID.randomUUID();
     when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupWithId(groupId)));
-    when(groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)).thenReturn(true);
+    when(groupMemberRepository.existsMember(groupId, userId)).thenReturn(true);
     GroupMember member = new GroupMember(groupId, memberUserId, GroupRole.MEMBER, userId);
     when(groupMemberRepository.findByGroupId(groupId)).thenReturn(List.of(member));
     User user = new User("google-sub", "テスト太郎", null);
@@ -132,9 +132,8 @@ class GroupServiceTest {
     UUID userId = UUID.randomUUID();
     when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupWithId(groupId)));
     GroupMember member = new GroupMember(groupId, userId, GroupRole.OWNER, null);
-    when(groupMemberRepository.findByGroupIdAndUserId(groupId, userId))
-        .thenReturn(Optional.of(member));
-    when(groupMemberRepository.countByGroupIdAndRole(groupId, GroupRole.OWNER)).thenReturn(1L);
+    when(groupMemberRepository.findMember(groupId, userId)).thenReturn(Optional.of(member));
+    when(groupMemberRepository.countMembersWithRole(groupId, GroupRole.OWNER)).thenReturn(1L);
 
     assertThatThrownBy(() -> groupService.leaveGroup(userId, groupId))
         .isInstanceOf(GroupException.class)
@@ -148,9 +147,8 @@ class GroupServiceTest {
     UUID userId = UUID.randomUUID();
     when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupWithId(groupId)));
     GroupMember member = new GroupMember(groupId, userId, GroupRole.OWNER, null);
-    when(groupMemberRepository.findByGroupIdAndUserId(groupId, userId))
-        .thenReturn(Optional.of(member));
-    when(groupMemberRepository.countByGroupIdAndRole(groupId, GroupRole.OWNER)).thenReturn(2L);
+    when(groupMemberRepository.findMember(groupId, userId)).thenReturn(Optional.of(member));
+    when(groupMemberRepository.countMembersWithRole(groupId, GroupRole.OWNER)).thenReturn(2L);
 
     groupService.leaveGroup(userId, groupId);
 
@@ -163,11 +161,9 @@ class GroupServiceTest {
     UUID requesterId = UUID.randomUUID();
     UUID targetId = UUID.randomUUID();
     when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupWithId(groupId)));
-    when(groupMemberRepository.existsByGroupIdAndUserIdAndRole(
-            groupId, requesterId, GroupRole.OWNER))
+    when(groupMemberRepository.existsMemberWithRole(groupId, requesterId, GroupRole.OWNER))
         .thenReturn(true);
-    when(groupMemberRepository.findByGroupIdAndUserId(groupId, targetId))
-        .thenReturn(Optional.empty());
+    when(groupMemberRepository.findMember(groupId, targetId)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> groupService.transferOwnership(requesterId, groupId, targetId))
         .isInstanceOf(GroupException.class)
@@ -181,12 +177,10 @@ class GroupServiceTest {
     UUID requesterId = UUID.randomUUID();
     UUID targetId = UUID.randomUUID();
     when(groupRepository.findById(groupId)).thenReturn(Optional.of(groupWithId(groupId)));
-    when(groupMemberRepository.existsByGroupIdAndUserIdAndRole(
-            groupId, requesterId, GroupRole.OWNER))
+    when(groupMemberRepository.existsMemberWithRole(groupId, requesterId, GroupRole.OWNER))
         .thenReturn(true);
     GroupMember target = new GroupMember(groupId, targetId, GroupRole.MEMBER, requesterId);
-    when(groupMemberRepository.findByGroupIdAndUserId(groupId, targetId))
-        .thenReturn(Optional.of(target));
+    when(groupMemberRepository.findMember(groupId, targetId)).thenReturn(Optional.of(target));
 
     groupService.transferOwnership(requesterId, groupId, targetId);
 
