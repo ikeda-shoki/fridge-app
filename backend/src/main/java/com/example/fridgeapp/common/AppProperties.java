@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.Duration;
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -19,7 +20,12 @@ public record AppProperties(
     @Valid Storage storage) {
 
   public record Jwt(
-      @NotBlank String secret,
+      /**
+       * HMAC-SHA の署名鍵。UTF-8 バイト列をそのまま鍵として使うため、RFC 7518 が要求する 256bit を満たすには 32 文字以上が必要 （不足すると起動時に
+       * jjwt が WeakKeyException を投げる）。
+       */
+      @NotBlank @Size(min = 32, message = "JWT_SECRET は 32 文字以上にしてください（HMAC-SHA の鍵長 256bit 以上が必要）")
+          String secret,
       @NotBlank String issuer,
       @NotBlank String audience,
       @NotNull Duration accessTokenExpiry,
