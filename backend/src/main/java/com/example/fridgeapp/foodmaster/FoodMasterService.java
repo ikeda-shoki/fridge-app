@@ -1,5 +1,6 @@
 package com.example.fridgeapp.foodmaster;
 
+import com.example.fridgeapp.common.LikeEscaper;
 import java.util.List;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
@@ -24,14 +25,9 @@ public class FoodMasterService {
       return List.of();
     }
     return foodMasterRepository
-        .findActiveByNameKanaPrefix(escapeLikeWildcards(trimmed), SUGGEST_LIMIT)
+        .findActiveByNameKanaPrefix(LikeEscaper.escape(trimmed), SUGGEST_LIMIT)
         .stream()
         .map(FoodMasterResponse::from)
         .toList();
-  }
-
-  /** 検索語に含まれる LIKE のワイルドカードを、リテラル文字として扱わせるためにエスケープする。 */
-  private static String escapeLikeWildcards(String input) {
-    return input.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
   }
 }
