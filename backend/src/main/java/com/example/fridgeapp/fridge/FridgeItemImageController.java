@@ -1,7 +1,9 @@
 package com.example.fridgeapp.fridge;
 
+import com.example.fridgeapp.auth.AuthenticatedUser;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,14 +24,17 @@ public class FridgeItemImageController {
 
   @PostMapping(consumes = "multipart/form-data")
   public ResponseEntity<FridgeItemImageResponse> uploadImage(
-      @PathVariable UUID id, @RequestParam("file") MultipartFile file) {
-    String imagePath = fridgeItemImageService.uploadImage(id, file);
+      @AuthenticationPrincipal AuthenticatedUser principal,
+      @PathVariable UUID id,
+      @RequestParam("file") MultipartFile file) {
+    String imagePath = fridgeItemImageService.uploadImage(principal.userId(), id, file);
     return ResponseEntity.ok(new FridgeItemImageResponse(imagePath));
   }
 
   @DeleteMapping
-  public ResponseEntity<Void> deleteImage(@PathVariable UUID id) {
-    fridgeItemImageService.deleteImage(id);
+  public ResponseEntity<Void> deleteImage(
+      @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
+    fridgeItemImageService.deleteImage(principal.userId(), id);
     return ResponseEntity.noContent().build();
   }
 }

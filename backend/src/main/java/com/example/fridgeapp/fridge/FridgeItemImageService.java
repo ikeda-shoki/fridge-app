@@ -1,6 +1,8 @@
 package com.example.fridgeapp.fridge;
 
 import com.example.fridgeapp.common.AppError;
+import com.example.fridgeapp.group.GroupException;
+import com.example.fridgeapp.group.GroupMemberRepository;
 import com.example.fridgeapp.storage.StorageService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -17,17 +19,21 @@ public class FridgeItemImageService {
   private static final int MAX_DIMENSION = 800;
 
   private final FridgeItemRepository fridgeItemRepository;
+  private final GroupMemberRepository groupMemberRepository;
   private final StorageService storageService;
 
   public FridgeItemImageService(
-      FridgeItemRepository fridgeItemRepository, StorageService storageService) {
+      FridgeItemRepository fridgeItemRepository,
+      GroupMemberRepository groupMemberRepository,
+      StorageService storageService) {
     this.fridgeItemRepository = fridgeItemRepository;
+    this.groupMemberRepository = groupMemberRepository;
     this.storageService = storageService;
   }
 
   @Transactional
-  public String uploadImage(UUID fridgeItemId, MultipartFile file) {
-    FridgeItem fridgeItem = findFridgeItem(fridgeItemId);
+  public String uploadImage(UUID userId, UUID fridgeItemId, MultipartFile file) {
+    FridgeItem fridgeItem = findFridgeItem(userId, fridgeItemId);
 
     if (file.isEmpty()) {
       throw new FridgeItemException(AppError.INVALID_IMAGE_FORMAT);
@@ -53,8 +59,8 @@ public class FridgeItemImageService {
   }
 
   @Transactional
-  public void deleteImage(UUID fridgeItemId) {
-    FridgeItem fridgeItem = findFridgeItem(fridgeItemId);
+  public void deleteImage(UUID userId, UUID fridgeItemId) {
+    FridgeItem fridgeItem = findFridgeItem(userId, fridgeItemId);
     String imagePath = fridgeItem.getImagePath();
     if (imagePath == null) {
       return;
@@ -64,10 +70,15 @@ public class FridgeItemImageService {
     storageService.delete(imagePath);
   }
 
-  private FridgeItem findFridgeItem(UUID id) {
-    return fridgeItemRepository
-        .findById(id)
-        .orElseThrow(() -> new FridgeItemException(AppError.FRIDGE_ITEM_NOT_FOUND));
+  private FridgeItem findFridgeItem(UUID userId, UUID id) {
+    FridgeItem fridgeItem =
+        fridgeItemRepository
+            .findById(id)
+            .orElseThrow(() -> new FridgeItemException(AppError.FRIDGE_ITEM_NOT_FOUND));
+    if (!groupMemberRepository.existsMember(fridgeItem.getGroupId(), userId)) {
+      throw new GroupException(AppError.NOT_GROUP_MEMBER);
+    }
+    return fridgeItem;
   }
 
   private byte[] resize(MultipartFile file, ImageFormat format) {
