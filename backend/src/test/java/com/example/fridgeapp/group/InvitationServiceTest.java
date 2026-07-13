@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Limit;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +50,7 @@ class InvitationServiceTest {
     UUID groupId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     when(groupRepository.existsById(groupId)).thenReturn(true);
-    when(groupMemberRepository.existsByGroupIdAndUserIdAndRole(groupId, userId, GroupRole.OWNER))
+    when(groupMemberRepository.existsMemberWithRole(groupId, userId, GroupRole.OWNER))
         .thenReturn(false);
 
     assertThatThrownBy(() -> invitationService.issueInvitationCode(userId, groupId))
@@ -62,13 +64,12 @@ class InvitationServiceTest {
     UUID groupId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     when(groupRepository.existsById(groupId)).thenReturn(true);
-    when(groupMemberRepository.existsByGroupIdAndUserIdAndRole(groupId, userId, GroupRole.OWNER))
+    when(groupMemberRepository.existsMemberWithRole(groupId, userId, GroupRole.OWNER))
         .thenReturn(true);
     InvitationCode existing = new InvitationCode(groupId, "OLDCOD", Instant.now().plusSeconds(600));
-    when(invitationCodeRepository.findByGroupIdAndUsedAtIsNull(groupId))
-        .thenReturn(Optional.of(existing));
+    when(invitationCodeRepository.findUnusedByGroupId(groupId)).thenReturn(Optional.of(existing));
     when(invitationCodeGenerator.generate()).thenReturn("NEWCOD");
-    when(invitationCodeRepository.existsByCodeAndUsedAtIsNull("NEWCOD")).thenReturn(false);
+    when(invitationCodeRepository.existsUnusedByCode("NEWCOD")).thenReturn(false);
     when(invitationCodeRepository.save(any(InvitationCode.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -81,7 +82,7 @@ class InvitationServiceTest {
 
   @Test
   void joinGroupThrowsWhenCodeNotFound() {
-    when(invitationCodeRepository.findTopByCodeOrderByCreatedAtDesc("ABCDEF"))
+    when(invitationCodeRepository.findLatestByCode(eq("ABCDEF"), any(Limit.class)))
         .thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> invitationService.joinGroup(UUID.randomUUID(), "abcdef", "192.0.2.1"))
@@ -99,7 +100,7 @@ class InvitationServiceTest {
     for (int i = 0; i < 10; i++) {
       code.recordFailedAttempt(Instant.now());
     }
-    when(invitationCodeRepository.findTopByCodeOrderByCreatedAtDesc("ABCDEF"))
+    when(invitationCodeRepository.findLatestByCode(eq("ABCDEF"), any(Limit.class)))
         .thenReturn(Optional.of(code));
 
     assertThatThrownBy(() -> invitationService.joinGroup(UUID.randomUUID(), "ABCDEF", "192.0.2.1"))
@@ -113,7 +114,7 @@ class InvitationServiceTest {
     UUID groupId = UUID.randomUUID();
     InvitationCode code =
         new InvitationCode(groupId, "ABCDEF", Instant.now().minus(1, ChronoUnit.DAYS));
-    when(invitationCodeRepository.findTopByCodeOrderByCreatedAtDesc("ABCDEF"))
+    when(invitationCodeRepository.findLatestByCode(eq("ABCDEF"), any(Limit.class)))
         .thenReturn(Optional.of(code));
 
     assertThatThrownBy(() -> invitationService.joinGroup(UUID.randomUUID(), "ABCDEF", "192.0.2.1"))
@@ -129,7 +130,7 @@ class InvitationServiceTest {
     UUID groupId = UUID.randomUUID();
     InvitationCode code = new InvitationCode(groupId, "ABCDEF", Instant.now().plusSeconds(600));
     code.markUsed(UUID.randomUUID(), Instant.now().minusSeconds(60));
-    when(invitationCodeRepository.findTopByCodeOrderByCreatedAtDesc("ABCDEF"))
+    when(invitationCodeRepository.findLatestByCode(eq("ABCDEF"), any(Limit.class)))
         .thenReturn(Optional.of(code));
 
     assertThatThrownBy(() -> invitationService.joinGroup(UUID.randomUUID(), "ABCDEF", "192.0.2.1"))
@@ -143,9 +144,9 @@ class InvitationServiceTest {
     UUID groupId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     InvitationCode code = new InvitationCode(groupId, "ABCDEF", Instant.now().plusSeconds(600));
-    when(invitationCodeRepository.findTopByCodeOrderByCreatedAtDesc("ABCDEF"))
+    when(invitationCodeRepository.findLatestByCode(eq("ABCDEF"), any(Limit.class)))
         .thenReturn(Optional.of(code));
-    when(groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)).thenReturn(true);
+    when(groupMemberRepository.existsMember(groupId, userId)).thenReturn(true);
 
     assertThatThrownBy(() -> invitationService.joinGroup(userId, "ABCDEF", "192.0.2.1"))
         .isInstanceOf(GroupException.class)
@@ -160,9 +161,9 @@ class InvitationServiceTest {
     UUID groupId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     InvitationCode code = new InvitationCode(groupId, "ABCDEF", Instant.now().plusSeconds(600));
-    when(invitationCodeRepository.findTopByCodeOrderByCreatedAtDesc("ABCDEF"))
+    when(invitationCodeRepository.findLatestByCode(eq("ABCDEF"), any(Limit.class)))
         .thenReturn(Optional.of(code));
-    when(groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)).thenReturn(false);
+    when(groupMemberRepository.existsMember(groupId, userId)).thenReturn(false);
     Group group = new Group("テストグループ");
     ReflectionTestUtils.setField(group, "id", groupId);
     when(groupRepository.findById(groupId)).thenReturn(Optional.of(group));
