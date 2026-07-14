@@ -13,6 +13,11 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * リフレッシュトークン。{@code tokenHash} には生トークンではなく SHA-256 ハッシュを保持する。
+ *
+ * <p>失効（ログアウト・ローテーション・退会）は {@code revokedAt} で表す。行は消さないため、有効判定は必ず {@link #isValid()} を通すこと。
+ */
 @Entity
 @Table(name = "refresh_tokens")
 public class RefreshToken extends AbstractAuditableEntity {
@@ -62,10 +67,12 @@ public class RefreshToken extends AbstractAuditableEntity {
     return revokedAt;
   }
 
+  /** 未失効かつ有効期限内であれば true。 */
   public boolean isValid() {
     return revokedAt == null && expiresAt.isAfter(Instant.now());
   }
 
+  /** 失効させる。以降このトークンでは更新できない。 */
   public void revoke() {
     this.revokedAt = Instant.now();
   }

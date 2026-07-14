@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/** ログイン中ユーザー情報の API（AUTH-04）。 */
 @RestController
 @RequestMapping("/api/v1/me")
 public class MeController {
@@ -16,6 +17,7 @@ public class MeController {
     this.authService = authService;
   }
 
+  /** ログイン中のユーザー情報を返す。 */
   @GetMapping
   public ResponseEntity<UserResponse> getMe(@AuthenticationPrincipal AuthenticatedUser principal) {
     User user = authService.getUser(principal.userId());

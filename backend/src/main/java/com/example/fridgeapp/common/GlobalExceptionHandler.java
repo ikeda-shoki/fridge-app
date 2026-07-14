@@ -13,6 +13,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+/**
+ * 例外を HTTP レスポンスへ一元的に変換する。
+ *
+ * <p>業務例外は {@link AppError} をもとに 4xx とユーザー向けメッセージを返す。想定外の例外は 500 +
+ * 固定メッセージとし、内部情報をレスポンスに含めない（詳細はログにのみ残す）。
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -21,12 +27,14 @@ public class GlobalExceptionHandler {
   private static final ErrorResponse SYSTEM_ERROR =
       new ErrorResponse("SYSTEM_ERROR", "システムエラーが発生しました。しばらくたってから再度お試しください");
 
+  /** 認証エラーはすべて 401 とする。 */
   @ExceptionHandler(AuthException.class)
   public ResponseEntity<ErrorResponse> handleAuthException(AuthException ex) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
         .body(new ErrorResponse(ex.getCode(), ex.getMessage()));
   }
 
+  /** 冷蔵庫アイテムの業務エラーを、エラー種別に応じた 4xx へ変換する。 */
   @ExceptionHandler(FridgeItemException.class)
   public ResponseEntity<ErrorResponse> handleFridgeItemException(FridgeItemException ex) {
     HttpStatus status =
@@ -40,6 +48,7 @@ public class GlobalExceptionHandler {
         .body(new ErrorResponse(ex.getError().name(), ex.getMessage()));
   }
 
+  /** グループ・招待の業務エラーを、エラー種別に応じた 4xx へ変換する（認可エラーは 403）。 */
   @ExceptionHandler(GroupException.class)
   public ResponseEntity<ErrorResponse> handleGroupException(GroupException ex) {
     HttpStatus status =
@@ -54,6 +63,7 @@ public class GlobalExceptionHandler {
         .body(new ErrorResponse(ex.getError().name(), ex.getMessage()));
   }
 
+  /** アップロードサイズ上限（Spring 側で弾かれる分）を、画像サイズ超過の業務エラーとして 400 で返す。 */
   @ExceptionHandler(MaxUploadSizeExceededException.class)
   public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
       MaxUploadSizeExceededException ex) {
@@ -63,6 +73,7 @@ public class GlobalExceptionHandler {
                 AppError.IMAGE_TOO_LARGE.name(), AppError.IMAGE_TOO_LARGE.getMessage()));
   }
 
+  /** Bean Validation の違反を、項目名つきのメッセージにまとめて 400 で返す。 */
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorResponse> handleValidationException(
       MethodArgumentNotValidException ex) {
@@ -73,6 +84,7 @@ public class GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(new ErrorResponse("VALIDATION_ERROR", message));
   }
 
+  /** 想定外の例外は 500 + 固定メッセージで返し、原因はログにのみ残す（内部情報を漏らさないため）。 */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleException(Exception ex) {
     log.error("Unexpected error", ex);

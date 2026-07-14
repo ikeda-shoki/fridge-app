@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** 認証の中核処理。Google ID トークンの検証、ユーザーの登録・更新、トークンの発行・更新・失効を扱う。 */
 @Service
 public class AuthService {
 
@@ -29,6 +30,12 @@ public class AuthService {
     this.googleVerifier = googleVerifier;
   }
 
+  /**
+   * Google ID トークンを検証してログインする（AUTH-01）。初回ログインならユーザーを新規登録し、既存ユーザーなら表示名・アバターを最新のプロフィールへ更新する。
+   *
+   * @throws AuthException トークンが不正な場合（{@link AppError#INVALID_GOOGLE_TOKEN}）、退会済みアカウントの場合（{@link
+   *     AppError#ACCOUNT_DELETED}）
+   */
   @Transactional
   public LoginResult loginWithGoogle(String idTokenString) {
     Payload payload = googleVerifier.verify(idTokenString);
@@ -54,6 +61,12 @@ public class AuthService {
     return new LoginResult(issueTokens(user), user);
   }
 
+  /**
+   * リフレッシュトークンからアクセストークンを再発行する（AUTH-02）。使用したリフレッシュトークンは失効し、新しいものへローテーションされる。
+   *
+   * @throws AuthException トークンが無効・期限切れ・失効済みの場合（{@link
+   *     AppError#INVALID_REFRESH_TOKEN}）、退会済みアカウントの場合（{@link AppError#ACCOUNT_DELETED}）
+   */
   @Transactional
   public AuthTokens refresh(String rawRefreshToken) {
     RefreshToken oldToken = refreshTokenService.findValid(rawRefreshToken);
@@ -68,11 +81,17 @@ public class AuthService {
     return new AuthTokens(newAccessToken, newRefreshToken);
   }
 
+  /** ログアウトする（AUTH-03）。リフレッシュトークンを失効させる。未知のトークンでも例外にはしない。 */
   @Transactional
   public void logout(String rawRefreshToken) {
     refreshTokenService.revoke(rawRefreshToken);
   }
 
+  /**
+   * ログイン中のユーザーを取得する。退会済みユーザーは存在しないものとして扱う。
+   *
+   * @throws AuthException ユーザーが存在しない、または退会済みの場合（{@link AppError#USER_NOT_FOUND}）
+   */
   @Transactional(readOnly = true)
   public User getUser(UUID userId) {
     return userRepository

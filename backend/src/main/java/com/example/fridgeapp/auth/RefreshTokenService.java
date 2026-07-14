@@ -12,6 +12,12 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * リフレッシュトークンの発行・検証・失効を行う。
+ *
+ * <p>DB には生トークンを保存せず SHA-256 ハッシュのみを保持する（DB 流出時にトークンをそのまま使われないようにするため）。呼び出し側へ返すのは生トークンで、これを Cookie
+ * に格納する。
+ */
 @Service
 public class RefreshTokenService {
 
@@ -35,6 +41,11 @@ public class RefreshTokenService {
     return rawToken;
   }
 
+  /**
+   * 生トークンから有効なリフレッシュトークンを取得する。
+   *
+   * @throws AuthException 該当トークンが無い、期限切れ、または失効済みの場合（{@link AppError#INVALID_REFRESH_TOKEN}）
+   */
   @Transactional(readOnly = true)
   public RefreshToken findValid(String rawToken) {
     String tokenHash = sha256Hex(rawToken);
@@ -56,6 +67,7 @@ public class RefreshTokenService {
     return issue(oldToken.getUser());
   }
 
+  /** トークンを失効させる（ログアウト時）。該当トークンが無い場合は何もしない。 */
   @Transactional
   public void revoke(String rawToken) {
     String tokenHash = sha256Hex(rawToken);
@@ -68,6 +80,7 @@ public class RefreshTokenService {
             });
   }
 
+  /** 対象ユーザーの有効なリフレッシュトークンをすべて失効させる（退会時に全端末のセッションを切るため）。 */
   @Transactional
   public void revokeAllForUser(UUID userId) {
     refreshTokenRepository.revokeAllByUserId(userId, Instant.now());

@@ -12,6 +12,7 @@ public class InvitationCodeGenerator {
 
   private final SecureRandom random = new SecureRandom();
 
+  /** 6 桁のコードを生成する。衝突チェックは呼び出し側（{@link InvitationService}）が行う。 */
   public String generate() {
     StringBuilder sb = new StringBuilder(CODE_LENGTH);
     for (int i = 0; i < CODE_LENGTH; i++) {

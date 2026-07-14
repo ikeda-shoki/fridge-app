@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+/** 食材マスタの永続化。 */
 public interface FoodMasterRepository extends JpaRepository<FoodMaster, UUID> {
 
   /**

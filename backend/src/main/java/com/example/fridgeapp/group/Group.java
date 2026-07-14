@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
 
+/** グループ（冷蔵庫を共有する単位）。所属ユーザーは {@link GroupMember} で表す。 */
 @Entity
 @Table(name = "groups")
 public class Group extends AbstractAuditableEntity {

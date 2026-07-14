@@ -27,11 +27,17 @@ public class JoinRateLimiter {
       new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, FailureState> failureStates = new ConcurrentHashMap<>();
 
+  /**
+   * この IP からの参加リクエストを受け付けてよいか検証し、呼び出しを 1 回分として記録する。
+   *
+   * @throws GroupException ロック中、またはレート制限を超えた場合（{@link AppError#JOIN_RATE_LIMITED}）
+   */
   public void assertAllowed(String clientIp) {
     assertNotLocked(clientIp);
     assertNotRateLimited(clientIp);
   }
 
+  /** 参加失敗を記録する。連続失敗が閾値に達した IP はロックする。 */
   public void recordFailure(String clientIp) {
     failureStates.compute(
         clientIp,
@@ -45,6 +51,7 @@ public class JoinRateLimiter {
         });
   }
 
+  /** 参加成功として連続失敗のカウントをリセットする。 */
   public void recordSuccess(String clientIp) {
     failureStates.remove(clientIp);
   }

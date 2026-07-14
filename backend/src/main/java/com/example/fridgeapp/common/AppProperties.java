@@ -10,6 +10,11 @@ import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
+/**
+ * {@code app.*} で定義するアプリ固有の設定値。
+ *
+ * <p>値は環境変数（`.env`）から注入される。必須項目が欠けている・形式が不正な場合は起動時に検証エラーとする（実行時まで問題を持ち越さないため）。
+ */
 @ConfigurationProperties(prefix = "app")
 @Validated
 public record AppProperties(

@@ -1,5 +1,13 @@
 package com.example.fridgeapp.common;
 
+/**
+ * 業務エラーのコードとメッセージを一元管理する。
+ *
+ * <p>enum 名がそのままレスポンスの {@code code} に、{@link #getMessage()} が {@code message}
+ * になる。エラーメッセージをコード中に直書きせず、必ずここへ定義すること。
+ *
+ * <p>HTTP ステータスへの対応付けは {@link GlobalExceptionHandler} が行う。
+ */
 public enum AppError {
 
   // ── Common ────────────────────────────────────────────────────────────

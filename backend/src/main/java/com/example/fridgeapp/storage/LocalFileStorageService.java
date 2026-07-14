@@ -9,6 +9,11 @@ import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+/**
+ * ローカルファイルシステムへ保存する {@link StorageService} 実装（開発用）。{@code app.storage.type=local} のときに有効。
+ *
+ * <p>ファイル名は UUID で採番し、元のファイル名は使わない。削除時はパスを正規化してベースディレクトリ配下かを検証し、{@code ../} によるディレクトリトラバーサルを防ぐ。
+ */
 @Component
 @ConditionalOnProperty(
     prefix = "app.storage",

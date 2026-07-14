@@ -10,9 +10,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * CsrfFilter は検証要否に関わらず CsrfToken をリクエスト属性として遅延ロードするだけで、 実際に値を読み出さない限り
- * Cookie（XSRF-TOKEN）への書き込みは発生しない。 ここで csrfToken.getToken() を呼び出すことで、認証状態や HTTP メソッドを問わず 毎リクエストで
- * Cookie を発行させる（SPA が初回アクセス時にトークンを取得できるようにするため）。
+ * CSRF トークンを毎リクエストで Cookie（XSRF-TOKEN）へ発行させるフィルター。
+ *
+ * <p>CsrfFilter は検証要否に関わらず CsrfToken をリクエスト属性として遅延ロードするだけで、実際に値を読み出さない限り Cookie への書き込みは発生しない。ここで
+ * {@code csrfToken.getToken()} を呼び出すことで、認証状態や HTTP メソッドを問わず Cookie を発行させる（SPA
+ * が初回アクセス時にトークンを取得できるようにするため）。
  */
 @Component
 public class CsrfCookieFilter extends OncePerRequestFilter {

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+/** 招待コードの永続化。 */
 public interface InvitationCodeRepository extends JpaRepository<InvitationCode, UUID> {
 
   /** グループの未使用の招待コード（1グループにつき最大1件）。 */

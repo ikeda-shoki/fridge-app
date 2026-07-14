@@ -9,6 +9,12 @@ import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 招待コードの発行と、コードによるグループ参加を扱う。
+ *
+ * <p>コードは 6 文字と短く総当たりが成立し得るため、多層で防御する。IP 単位のレートリミット・ロック（{@link
+ * JoinRateLimiter}）、コード単位の失敗回数ロック（{@link InvitationCode}）、7 日の有効期限、1 回で使い切り。
+ */
 @Service
 public class InvitationService {
 
@@ -37,6 +43,12 @@ public class InvitationService {
     this.groupAccessGuard = groupAccessGuard;
   }
 
+  /**
+   * 招待コードを発行する（GRP-06）。有効期限は 7 日。同じグループに未使用のコードが残っている場合は、それを即時失効させてから新しいコードを発行する（有効なコードは常に 1 件）。
+   *
+   * @throws GroupException グループが存在しない場合（{@link AppError#GROUP_NOT_FOUND}）、操作ユーザーがオーナーでない場合（{@link
+   *     AppError#NOT_GROUP_OWNER}）
+   */
   @Transactional
   public InvitationCodeResponse issueInvitationCode(UUID userId, UUID groupId) {
     if (!groupRepository.existsById(groupId)) {
@@ -59,6 +71,15 @@ public class InvitationService {
     return InvitationCodeResponse.from(invitationCode);
   }
 
+  /**
+   * 招待コードでグループに参加する（GRP-07）。参加に成功するとコードは使用済みになる。
+   *
+   * <p>失敗時は総当たり対策として、コード側の失敗回数と IP 側の連続失敗回数の両方を加算する（閾値超過で一定時間ロックされる）。
+   *
+   * @param clientIp レートリミット・ロックの判定単位となる送信元 IP
+   * @throws GroupException レート制限・ロック中（{@link AppError#JOIN_RATE_LIMITED} / {@link
+   *     AppError#INVITATION_CODE_LOCKED}）、コードが不正・期限切れ・使用済み、既にメンバーの場合
+   */
   @Transactional
   public GroupResponse joinGroup(UUID userId, String rawCode, String clientIp) {
     joinRateLimiter.assertAllowed(clientIp);

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+/** 冷蔵庫アイテムの永続化。 */
 public interface FridgeItemRepository extends JpaRepository<FridgeItem, UUID> {
 
   /**

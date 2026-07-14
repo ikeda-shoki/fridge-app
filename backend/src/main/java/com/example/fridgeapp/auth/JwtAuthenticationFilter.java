@@ -11,6 +11,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * アクセストークン Cookie を検証し、成功したら SecurityContext に認証情報を設定するフィルター。
+ *
+ * <p>トークンが無い・無効な場合もここでは例外にせず未認証のまま通す。保護されたエンドポイントかどうかの判断は Spring Security（{@link
+ * SecurityConfig}）に任せ、 認可が必要な経路では最終的に 401 となる。
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
