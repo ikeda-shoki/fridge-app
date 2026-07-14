@@ -10,6 +10,11 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * ユーザー。Google アカウント（{@code googleSub}）と 1:1 で対応する。
+ *
+ * <p>退会は {@code deletedAt} による論理削除。同じ Google アカウントで再ログインしても復活はさせない（{@link AuthService} が拒否する）。
+ */
 @Entity
 @Table(name = "users")
 public class User extends AbstractAuditableEntity {
@@ -68,6 +73,7 @@ public class User extends AbstractAuditableEntity {
     this.avatarUrl = avatarUrl;
   }
 
+  /** 退会させる（AUTH-05）。物理削除はせず、退会日時を記録する。 */
   public void markDeleted() {
     this.deletedAt = Instant.now();
   }

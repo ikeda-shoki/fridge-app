@@ -7,8 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+/** グループ所属の永続化。認可判定（メンバーか・オーナーか）にも使う。 */
 public interface GroupMemberRepository extends JpaRepository<GroupMember, UUID> {
 
+  /** グループに所属する全メンバー。 */
   List<GroupMember> findByGroupId(UUID groupId);
 
   /** 指定ユーザーがグループに所属しているか。 */

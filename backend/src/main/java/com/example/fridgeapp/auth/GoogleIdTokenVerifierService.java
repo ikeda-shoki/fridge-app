@@ -12,6 +12,7 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
+/** Google ID トークンを Google の公開鍵で検証する。audience（このアプリのクライアント ID）の一致も検証する。 */
 @Service
 public class GoogleIdTokenVerifierService {
 
@@ -24,6 +25,12 @@ public class GoogleIdTokenVerifierService {
             .build();
   }
 
+  /**
+   * ID トークンを検証し、ペイロード（sub・name・picture 等）を返す。
+   *
+   * @throws AuthException 署名・期限・audience の検証に失敗した場合や、Google への通信に失敗した場合（{@link
+   *     AppError#INVALID_GOOGLE_TOKEN}）
+   */
   public Payload verify(String idTokenString) {
     try {
       GoogleIdToken idToken = verifier.verify(idTokenString);

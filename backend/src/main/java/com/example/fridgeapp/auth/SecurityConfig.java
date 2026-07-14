@@ -20,6 +20,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+/**
+ * Spring Security の設定。セッションを持たない Cookie + JWT 方式で、CSRF・CORS もここで設定する。
+ *
+ * <p>認証系（{@code /api/v1/auth/**}）以外はすべて要認証。詳細な方針は {@code docs/security.md} を参照。
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity // ステップ7以降で @PreAuthorize を使用
@@ -38,6 +43,7 @@ public class SecurityConfig {
     this.corsProperties = appProperties.cors();
   }
 
+  /** フィルターチェーンを構成する。未認証は 401、認可エラーは 403 を返す。 */
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     CsrfTokenRequestAttributeHandler csrfTokenRequestHandler =

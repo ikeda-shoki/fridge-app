@@ -28,6 +28,7 @@ public enum FridgeItemCategory {
     this.label = label;
   }
 
+  /** DB・API でやり取りする日本語ラベル。 */
   public String label() {
     return label;
   }

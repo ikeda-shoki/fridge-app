@@ -12,6 +12,7 @@ import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
+/** アクセストークン（JWT）の発行と検証を行う。署名は HMAC-SHA、subject にユーザー ID を格納する。 */
 @Service
 public class JwtService {
 
@@ -24,6 +25,7 @@ public class JwtService {
     this.key = Keys.hmacShaKeyFor(jwtProps.secret().getBytes(StandardCharsets.UTF_8));
   }
 
+  /** アクセストークンを発行する。有効期限は {@code app.jwt.access-token-expiry} に従う。 */
   public String issueAccessToken(UUID userId) {
     Date now = new Date();
     Date expiry = new Date(now.getTime() + jwtProps.accessTokenExpiry().toMillis());
@@ -40,6 +42,11 @@ public class JwtService {
         .compact();
   }
 
+  /**
+   * アクセストークンを検証し、ユーザー ID を取り出す。署名・issuer・audience・有効期限をすべて検証する。
+   *
+   * @throws AuthException 署名不正・期限切れ・issuer/audience 不一致など、検証に失敗した場合（{@link AppError#INVALID_TOKEN}）
+   */
   public UUID validateAndExtractUserId(String token) {
     try {
       Claims claims =

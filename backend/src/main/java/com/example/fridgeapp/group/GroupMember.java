@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
+/** グループへの所属。ユーザーとグループの対応と、そのグループでの役割（{@link GroupRole}）を持つ。 */
 @Entity
 @Table(name = "group_members")
 public class GroupMember extends AbstractAuditableEntity {
@@ -70,6 +71,7 @@ public class GroupMember extends AbstractAuditableEntity {
     return joinedAt;
   }
 
+  /** オーナーへ昇格させる（オーナー譲渡時）。 */
   public void promoteToOwner() {
     this.role = GroupRole.OWNER;
   }

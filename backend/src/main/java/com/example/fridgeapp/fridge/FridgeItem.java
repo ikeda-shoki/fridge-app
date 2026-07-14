@@ -14,6 +14,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * 冷蔵庫アイテム。グループ単位で管理する。
+ *
+ * <p>消費履歴（{@link ConsumptionEvent}）から参照されるため物理削除はせず、消費しきった場合・削除した場合は {@link FridgeItemStatus}
+ * で状態を表す。カテゴリは日本語ラベルとして保存する（{@link FridgeItemCategoryConverter}）。
+ */
 @Entity
 @Table(name = "fridge_items")
 public class FridgeItem extends AbstractAuditableEntity {
@@ -137,6 +143,7 @@ public class FridgeItem extends AbstractAuditableEntity {
     return imagePath;
   }
 
+  /** 編集・消費の対象となる状態（消費済み・削除済みでない）なら true。 */
   public boolean isActive() {
     return status == FridgeItemStatus.ACTIVE;
   }
@@ -201,10 +208,12 @@ public class FridgeItem extends AbstractAuditableEntity {
     this.status = FridgeItemStatus.DELETED;
   }
 
+  /** 画像を差し替える。古い画像の実体削除は呼び出し側（{@link FridgeItemImageService}）が行う。 */
   public void replaceImage(String newImagePath) {
     this.imagePath = newImagePath;
   }
 
+  /** 画像の参照を外す。実体削除は呼び出し側が行う。 */
   public void clearImage() {
     this.imagePath = null;
   }

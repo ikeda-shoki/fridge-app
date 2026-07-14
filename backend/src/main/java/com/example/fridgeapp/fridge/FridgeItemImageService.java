@@ -11,6 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 冷蔵庫アイテムの画像アップロード・削除を扱う（FRG-08）。
+ *
+ * <p>受け付けるのは JPEG / PNG のみで、判定は拡張子や Content-Type ではなくマジックバイトで行う（{@link ImageFormat}）。保存前に長辺 800px
+ * へ縮小する。操作には対象アイテムのグループメンバーであることが必要。
+ */
 @Service
 public class FridgeItemImageService {
 
@@ -30,6 +36,14 @@ public class FridgeItemImageService {
     this.storageService = storageService;
   }
 
+  /**
+   * 画像をアップロードし、保存先パスを返す。既存の画像があれば差し替え、古い画像は削除する。
+   *
+   * @throws GroupException 操作ユーザーがアイテムのグループのメンバーでない場合（{@link AppError#NOT_GROUP_MEMBER}）
+   * @throws FridgeItemException アイテムが存在しない場合、JPEG / PNG 以外・空ファイル（{@link
+   *     AppError#INVALID_IMAGE_FORMAT}）、5MB 超（{@link AppError#IMAGE_TOO_LARGE}）、縮小に失敗した場合（{@link
+   *     AppError#IMAGE_PROCESSING_FAILED}）
+   */
   @Transactional
   public String uploadImage(UUID userId, UUID fridgeItemId, MultipartFile file) {
     FridgeItem fridgeItem = findFridgeItem(userId, fridgeItemId);
@@ -57,6 +71,12 @@ public class FridgeItemImageService {
     return newImagePath;
   }
 
+  /**
+   * 画像を削除する。画像が登録されていない場合は何もしない。
+   *
+   * @throws GroupException 操作ユーザーがアイテムのグループのメンバーでない場合（{@link AppError#NOT_GROUP_MEMBER}）
+   * @throws FridgeItemException アイテムが存在しない場合（{@link AppError#FRIDGE_ITEM_NOT_FOUND}）
+   */
   @Transactional
   public void deleteImage(UUID userId, UUID fridgeItemId) {
     FridgeItem fridgeItem = findFridgeItem(userId, fridgeItemId);

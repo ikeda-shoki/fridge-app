@@ -13,6 +13,11 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+/**
+ * グループ招待コード（6 文字）。1 回の参加で使い切り、有効期限を持つ。
+ *
+ * <p>総当たりを防ぐため、参加失敗を {@code failedAttempts} に記録し、閾値（10 回）を超えたコードは一定時間（3 時間）ロックする。
+ */
 @Entity
 @Table(name = "invitation_codes")
 public class InvitationCode extends AbstractAuditableEntity {
@@ -87,14 +92,17 @@ public class InvitationCode extends AbstractAuditableEntity {
     return lockedUntil;
   }
 
+  /** 使用済みなら true。招待コードは 1 回しか使えない。 */
   public boolean isUsed() {
     return usedAt != null;
   }
 
+  /** 有効期限切れなら true。 */
   public boolean isExpired(Instant now) {
     return now.isAfter(expiresAt);
   }
 
+  /** 失敗回数超過でロック中なら true。ロック中は正しいコードでも参加できない。 */
   public boolean isLocked(Instant now) {
     return lockedUntil != null && now.isBefore(lockedUntil);
   }
@@ -104,6 +112,7 @@ public class InvitationCode extends AbstractAuditableEntity {
     this.expiresAt = Instant.now();
   }
 
+  /** 参加失敗を記録する。閾値（10 回）に達したら 3 時間ロックする。 */
   public void recordFailedAttempt(Instant now) {
     this.failedAttempts++;
     if (this.failedAttempts >= FAILURE_LOCK_THRESHOLD) {
@@ -111,6 +120,7 @@ public class InvitationCode extends AbstractAuditableEntity {
     }
   }
 
+  /** 使用済みにする（参加成功時）。以降このコードでは参加できない。 */
   public void markUsed(UUID userId, Instant now) {
     this.usedBy = userId;
     this.usedAt = now;

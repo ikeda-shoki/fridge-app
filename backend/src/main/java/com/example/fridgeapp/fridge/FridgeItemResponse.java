@@ -24,6 +24,7 @@ public record FridgeItemResponse(
     String memo,
     FridgeItemStatus status) {
 
+  /** エンティティからレスポンスへ変換する。カテゴリは日本語ラベルに変換して返す。 */
   public static FridgeItemResponse from(FridgeItem item) {
     return new FridgeItemResponse(
         item.getId(),

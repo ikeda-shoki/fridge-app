@@ -9,6 +9,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
 
+/**
+ * 食材マスタ。アイテム登録時のサジェストと、カテゴリ・単位の自動入力（MST-04）に使う。
+ *
+ * <p>運用データのためアプリからは登録・更新せず、マイグレーションの seed で投入する。廃止した食材は削除せず {@code active} を false にする。
+ */
 @Entity
 @Table(name = "food_master")
 public class FoodMaster extends AbstractAuditableEntity {

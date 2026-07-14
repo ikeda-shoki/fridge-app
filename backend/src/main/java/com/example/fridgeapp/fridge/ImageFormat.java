@@ -16,10 +16,16 @@ enum ImageFormat {
     this.extension = extension;
   }
 
+  /** 保存時に使う拡張子。 */
   String extension() {
     return extension;
   }
 
+  /**
+   * 先頭バイト（マジックバイト）から画像形式を判定する。判定できない場合は空を返す。
+   *
+   * <p>Content-Type やファイル名の拡張子はクライアントが自由に詐称できるため、実体のバイト列で判定する。
+   */
   static Optional<ImageFormat> detect(MultipartFile file) {
     byte[] header = new byte[8];
     int read;

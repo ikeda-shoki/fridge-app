@@ -6,6 +6,7 @@ import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** 食材マスタの検索（サジェスト）を扱う。 */
 @Service
 public class FoodMasterService {
 
@@ -18,6 +19,11 @@ public class FoodMasterService {
     this.foodMasterRepository = foodMasterRepository;
   }
 
+  /**
+   * よみがなの前方一致で有効な食材を検索する（MST-02）。よみがな昇順で、サジェスト用に最大 20 件まで返す。
+   *
+   * <p>検索語が空・空白のみの場合は、全件返さず空リストを返す。
+   */
   @Transactional(readOnly = true)
   public List<FoodMasterResponse> search(String query) {
     String trimmed = query == null ? "" : query.trim();
