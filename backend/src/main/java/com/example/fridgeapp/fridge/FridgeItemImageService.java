@@ -1,8 +1,7 @@
 package com.example.fridgeapp.fridge;
 
 import com.example.fridgeapp.common.AppError;
-import com.example.fridgeapp.group.GroupException;
-import com.example.fridgeapp.group.GroupMemberRepository;
+import com.example.fridgeapp.group.GroupAccessGuard;
 import com.example.fridgeapp.storage.StorageService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,15 +18,15 @@ public class FridgeItemImageService {
   private static final int MAX_DIMENSION = 800;
 
   private final FridgeItemRepository fridgeItemRepository;
-  private final GroupMemberRepository groupMemberRepository;
+  private final GroupAccessGuard groupAccessGuard;
   private final StorageService storageService;
 
   public FridgeItemImageService(
       FridgeItemRepository fridgeItemRepository,
-      GroupMemberRepository groupMemberRepository,
+      GroupAccessGuard groupAccessGuard,
       StorageService storageService) {
     this.fridgeItemRepository = fridgeItemRepository;
-    this.groupMemberRepository = groupMemberRepository;
+    this.groupAccessGuard = groupAccessGuard;
     this.storageService = storageService;
   }
 
@@ -75,9 +74,7 @@ public class FridgeItemImageService {
         fridgeItemRepository
             .findById(id)
             .orElseThrow(() -> new FridgeItemException(AppError.FRIDGE_ITEM_NOT_FOUND));
-    if (!groupMemberRepository.existsMember(fridgeItem.getGroupId(), userId)) {
-      throw new GroupException(AppError.NOT_GROUP_MEMBER);
-    }
+    groupAccessGuard.assertMember(fridgeItem.getGroupId(), userId);
     return fridgeItem;
   }
 

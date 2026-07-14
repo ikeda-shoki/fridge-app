@@ -14,14 +14,17 @@ public class GroupService {
   private final GroupRepository groupRepository;
   private final GroupMemberRepository groupMemberRepository;
   private final UserRepository userRepository;
+  private final GroupAccessGuard groupAccessGuard;
 
   public GroupService(
       GroupRepository groupRepository,
       GroupMemberRepository groupMemberRepository,
-      UserRepository userRepository) {
+      UserRepository userRepository,
+      GroupAccessGuard groupAccessGuard) {
     this.groupRepository = groupRepository;
     this.groupMemberRepository = groupMemberRepository;
     this.userRepository = userRepository;
+    this.groupAccessGuard = groupAccessGuard;
   }
 
   @Transactional
@@ -34,21 +37,21 @@ public class GroupService {
   @Transactional(readOnly = true)
   public GroupResponse getGroupDetail(UUID userId, UUID groupId) {
     Group group = findGroup(groupId);
-    assertMember(groupId, userId);
+    groupAccessGuard.assertMember(groupId, userId);
     return GroupResponse.from(group);
   }
 
   @Transactional
   public void deleteGroup(UUID userId, UUID groupId) {
     Group group = findGroup(groupId);
-    assertOwner(groupId, userId);
+    groupAccessGuard.assertOwner(groupId, userId);
     groupRepository.delete(group);
   }
 
   @Transactional(readOnly = true)
   public List<GroupMemberResponse> listMembers(UUID userId, UUID groupId) {
     findGroup(groupId);
-    assertMember(groupId, userId);
+    groupAccessGuard.assertMember(groupId, userId);
     return groupMemberRepository.findByGroupId(groupId).stream()
         .map(
             member -> {
@@ -75,7 +78,7 @@ public class GroupService {
   @Transactional
   public void transferOwnership(UUID requesterId, UUID groupId, UUID targetUserId) {
     findGroup(groupId);
-    assertOwner(groupId, requesterId);
+    groupAccessGuard.assertOwner(groupId, requesterId);
     GroupMember target =
         groupMemberRepository
             .findMember(groupId, targetUserId)
@@ -94,17 +97,5 @@ public class GroupService {
     return groupMemberRepository
         .findMember(groupId, userId)
         .orElseThrow(() -> new GroupException(AppError.NOT_GROUP_MEMBER));
-  }
-
-  private void assertMember(UUID groupId, UUID userId) {
-    if (!groupMemberRepository.existsMember(groupId, userId)) {
-      throw new GroupException(AppError.NOT_GROUP_MEMBER);
-    }
-  }
-
-  private void assertOwner(UUID groupId, UUID userId) {
-    if (!groupMemberRepository.existsMemberWithRole(groupId, userId, GroupRole.OWNER)) {
-      throw new GroupException(AppError.NOT_GROUP_OWNER);
-    }
   }
 }

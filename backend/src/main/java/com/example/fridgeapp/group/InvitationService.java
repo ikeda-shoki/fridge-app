@@ -20,18 +20,21 @@ public class InvitationService {
   private final InvitationCodeRepository invitationCodeRepository;
   private final InvitationCodeGenerator invitationCodeGenerator;
   private final JoinRateLimiter joinRateLimiter;
+  private final GroupAccessGuard groupAccessGuard;
 
   public InvitationService(
       GroupRepository groupRepository,
       GroupMemberRepository groupMemberRepository,
       InvitationCodeRepository invitationCodeRepository,
       InvitationCodeGenerator invitationCodeGenerator,
-      JoinRateLimiter joinRateLimiter) {
+      JoinRateLimiter joinRateLimiter,
+      GroupAccessGuard groupAccessGuard) {
     this.groupRepository = groupRepository;
     this.groupMemberRepository = groupMemberRepository;
     this.invitationCodeRepository = invitationCodeRepository;
     this.invitationCodeGenerator = invitationCodeGenerator;
     this.joinRateLimiter = joinRateLimiter;
+    this.groupAccessGuard = groupAccessGuard;
   }
 
   @Transactional
@@ -39,9 +42,7 @@ public class InvitationService {
     if (!groupRepository.existsById(groupId)) {
       throw new GroupException(AppError.GROUP_NOT_FOUND);
     }
-    if (!groupMemberRepository.existsMemberWithRole(groupId, userId, GroupRole.OWNER)) {
-      throw new GroupException(AppError.NOT_GROUP_OWNER);
-    }
+    groupAccessGuard.assertOwner(groupId, userId);
 
     invitationCodeRepository
         .findUnusedByGroupId(groupId)

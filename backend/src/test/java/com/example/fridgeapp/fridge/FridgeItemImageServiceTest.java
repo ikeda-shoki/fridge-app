@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.example.fridgeapp.common.AppError;
+import com.example.fridgeapp.group.GroupAccessGuard;
 import com.example.fridgeapp.group.GroupException;
 import com.example.fridgeapp.group.GroupMemberRepository;
 import com.example.fridgeapp.storage.StorageService;
@@ -42,7 +43,8 @@ class FridgeItemImageServiceTest {
   @BeforeEach
   void setUp() {
     imageService =
-        new FridgeItemImageService(fridgeItemRepository, groupMemberRepository, storageService);
+        new FridgeItemImageService(
+            fridgeItemRepository, new GroupAccessGuard(groupMemberRepository), storageService);
     lenient().when(groupMemberRepository.existsMember(GROUP_ID, USER_ID)).thenReturn(true);
   }
 

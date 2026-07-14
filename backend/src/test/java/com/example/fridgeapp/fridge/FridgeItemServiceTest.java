@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import com.example.fridgeapp.common.AppError;
 import com.example.fridgeapp.foodmaster.FoodMasterRepository;
+import com.example.fridgeapp.group.GroupAccessGuard;
 import com.example.fridgeapp.group.GroupException;
 import com.example.fridgeapp.group.GroupMemberRepository;
 import java.math.BigDecimal;
@@ -45,7 +46,7 @@ class FridgeItemServiceTest {
             fridgeItemRepository,
             consumptionEventRepository,
             foodMasterRepository,
-            groupMemberRepository);
+            new GroupAccessGuard(groupMemberRepository));
     lenient().when(groupMemberRepository.existsMember(GROUP_ID, USER_ID)).thenReturn(true);
   }
 

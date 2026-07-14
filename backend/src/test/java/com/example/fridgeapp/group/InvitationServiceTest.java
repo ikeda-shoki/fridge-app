@@ -42,7 +42,8 @@ class InvitationServiceTest {
             groupMemberRepository,
             invitationCodeRepository,
             invitationCodeGenerator,
-            joinRateLimiter);
+            joinRateLimiter,
+            new GroupAccessGuard(groupMemberRepository));
   }
 
   @Test

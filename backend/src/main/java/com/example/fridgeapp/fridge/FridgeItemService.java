@@ -3,8 +3,7 @@ package com.example.fridgeapp.fridge;
 import com.example.fridgeapp.common.AppError;
 import com.example.fridgeapp.common.LikeEscaper;
 import com.example.fridgeapp.foodmaster.FoodMasterRepository;
-import com.example.fridgeapp.group.GroupException;
-import com.example.fridgeapp.group.GroupMemberRepository;
+import com.example.fridgeapp.group.GroupAccessGuard;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -19,24 +18,24 @@ public class FridgeItemService {
   private final FridgeItemRepository fridgeItemRepository;
   private final ConsumptionEventRepository consumptionEventRepository;
   private final FoodMasterRepository foodMasterRepository;
-  private final GroupMemberRepository groupMemberRepository;
+  private final GroupAccessGuard groupAccessGuard;
 
   public FridgeItemService(
       FridgeItemRepository fridgeItemRepository,
       ConsumptionEventRepository consumptionEventRepository,
       FoodMasterRepository foodMasterRepository,
-      GroupMemberRepository groupMemberRepository) {
+      GroupAccessGuard groupAccessGuard) {
     this.fridgeItemRepository = fridgeItemRepository;
     this.consumptionEventRepository = consumptionEventRepository;
     this.foodMasterRepository = foodMasterRepository;
-    this.groupMemberRepository = groupMemberRepository;
+    this.groupAccessGuard = groupAccessGuard;
   }
 
   /** 一覧（FRG-04・FRG-06・FRG-09）。賞味期限が近い順、カテゴリ絞り込みと名前検索は併用できる。 */
   @Transactional(readOnly = true)
   public List<FridgeItemResponse> listItems(
       UUID userId, UUID groupId, String category, String query) {
-    assertGroupMember(groupId, userId);
+    groupAccessGuard.assertMember(groupId, userId);
 
     FridgeItemCategory categoryFilter = category == null ? null : parseCategory(category);
     String keyword = (query == null || query.isBlank()) ? "" : LikeEscaper.escape(query.trim());
@@ -51,7 +50,7 @@ public class FridgeItemService {
   /** アイテム登録（FRG-01）。購入日・購入者は未指定なら登録日・登録ユーザーで補完する。 */
   @Transactional
   public FridgeItemResponse createItem(UUID userId, UUID groupId, FridgeItemCreateRequest request) {
-    assertGroupMember(groupId, userId);
+    groupAccessGuard.assertMember(groupId, userId);
     assertFoodMasterExists(request.foodMasterId());
 
     FridgeItem item =
@@ -103,9 +102,6 @@ public class FridgeItemService {
     FridgeItem item = findActiveItem(userId, itemId);
 
     BigDecimal quantityConsumed = request.quantity();
-    if (quantityConsumed.compareTo(item.getQuantity()) > 0) {
-      throw new FridgeItemException(AppError.INSUFFICIENT_QUANTITY);
-    }
     item.consume(quantityConsumed);
     fridgeItemRepository.save(item);
 
@@ -123,17 +119,11 @@ public class FridgeItemService {
         fridgeItemRepository
             .findById(itemId)
             .orElseThrow(() -> new FridgeItemException(AppError.FRIDGE_ITEM_NOT_FOUND));
-    assertGroupMember(item.getGroupId(), userId);
+    groupAccessGuard.assertMember(item.getGroupId(), userId);
     if (!item.isActive()) {
       throw new FridgeItemException(AppError.FRIDGE_ITEM_NOT_ACTIVE);
     }
     return item;
-  }
-
-  private void assertGroupMember(UUID groupId, UUID userId) {
-    if (!groupMemberRepository.existsMember(groupId, userId)) {
-      throw new GroupException(AppError.NOT_GROUP_MEMBER);
-    }
   }
 
   private void assertFoodMasterExists(UUID foodMasterId) {
