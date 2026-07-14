@@ -1,6 +1,7 @@
 package com.example.fridgeapp.fridge;
 
 import com.example.fridgeapp.common.AbstractAuditableEntity;
+import com.example.fridgeapp.common.AppError;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -183,11 +184,11 @@ public class FridgeItem extends AbstractAuditableEntity {
   /**
    * 数量を消費する（FRG-07）。残数が 0 になった場合は消費済みへ遷移する。
    *
-   * @throws IllegalArgumentException 消費量が残数を超える場合（呼び出し側で事前に検証すること）
+   * @throws FridgeItemException 消費量が残数を超える場合（{@link AppError#INSUFFICIENT_QUANTITY}）
    */
   public void consume(BigDecimal quantityConsumed) {
     if (quantityConsumed.compareTo(this.quantity) > 0) {
-      throw new IllegalArgumentException("消費量が残数を超えています");
+      throw new FridgeItemException(AppError.INSUFFICIENT_QUANTITY);
     }
     this.quantity = this.quantity.subtract(quantityConsumed);
     if (this.quantity.compareTo(BigDecimal.ZERO) == 0) {

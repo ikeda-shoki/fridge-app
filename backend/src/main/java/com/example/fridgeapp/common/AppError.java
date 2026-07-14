@@ -29,6 +29,7 @@ public enum AppError {
   FRIDGE_ITEM_NOT_FOUND("冷蔵庫アイテムが見つかりません"),
   FRIDGE_ITEM_NOT_ACTIVE("このアイテムは既に消費済みまたは削除されています"),
   INVALID_FRIDGE_ITEM_CATEGORY("対応していないカテゴリです"),
+  CORRUPTED_FRIDGE_ITEM_CATEGORY("保存されたカテゴリの値が不正です"),
   INSUFFICIENT_QUANTITY("消費数量がアイテムの残数を超えています"),
   INVALID_IMAGE_FORMAT("対応していない画像形式です（JPEG/PNGのみ）"),
   IMAGE_TOO_LARGE("画像サイズが5MBを超えています"),

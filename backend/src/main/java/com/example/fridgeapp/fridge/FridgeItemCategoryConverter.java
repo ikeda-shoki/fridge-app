@@ -1,5 +1,6 @@
 package com.example.fridgeapp.fridge;
 
+import com.example.fridgeapp.common.AppError;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
@@ -17,7 +18,11 @@ public class FridgeItemCategoryConverter implements AttributeConverter<FridgeIte
     if (label == null) {
       return null;
     }
+    // 業務エラーではなく DB のデータ不整合。GlobalExceptionHandler で 500（固定メッセージ）になり、詳細はログにのみ残す
     return FridgeItemCategory.fromLabel(label)
-        .orElseThrow(() -> new IllegalStateException("未知のカテゴリが保存されています: " + label));
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    AppError.CORRUPTED_FRIDGE_ITEM_CATEGORY.getMessage() + ": " + label));
   }
 }
