@@ -1,4 +1,12 @@
 spring:
+  # ローカル開発用にリポジトリ直下の .env を設定ソースとして読み込む（.properties 形式として解釈される）。
+  # optional: のため .env が無い環境（CI・本番）では単に無視される。OS 環境変数は config import より
+  # 優先されるため、本番は環境変数だけで上書きできる。
+  config:
+    import:
+      - optional:file:../.env[.properties]
+      - optional:file:.env[.properties]
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/fridgeapp}
     username: ${DB_APP_USER:fridgeapp_app}

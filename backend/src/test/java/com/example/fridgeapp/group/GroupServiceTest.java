@@ -30,7 +30,12 @@ class GroupServiceTest {
 
   @BeforeEach
   void setUp() {
-    groupService = new GroupService(groupRepository, groupMemberRepository, userRepository);
+    groupService =
+        new GroupService(
+            groupRepository,
+            groupMemberRepository,
+            userRepository,
+            new GroupAccessGuard(groupMemberRepository));
   }
 
   @Test

@@ -34,12 +34,29 @@ class FridgeItemImageControllerTest extends AbstractIntegrationTest {
 
   private UUID fridgeItemId;
   private Authentication authenticatedUser;
+  private Authentication outsider;
 
   @BeforeEach
   void seedFridgeItem() {
     UUID groupId = UUID.randomUUID();
+    UUID memberId = UUID.randomUUID();
+    UUID outsiderId = UUID.randomUUID();
     fridgeItemId = UUID.randomUUID();
     jdbcTemplate.update("INSERT INTO groups (id, name) VALUES (?, ?)", groupId, "テストグループ");
+    jdbcTemplate.update(
+        "INSERT INTO users (id, google_sub, display_name) VALUES (?, ?, ?)",
+        memberId,
+        "google-member",
+        "メンバー太郎");
+    jdbcTemplate.update(
+        "INSERT INTO users (id, google_sub, display_name) VALUES (?, ?, ?)",
+        outsiderId,
+        "google-outsider",
+        "部外者花子");
+    jdbcTemplate.update(
+        "INSERT INTO group_members (group_id, user_id, role) VALUES (?, ?, 'OWNER')",
+        groupId,
+        memberId);
     jdbcTemplate.update(
         "INSERT INTO fridge_items (id, group_id, display_name, quantity, status) "
             + "VALUES (?, ?, ?, 1, 'ACTIVE')",
@@ -47,8 +64,9 @@ class FridgeItemImageControllerTest extends AbstractIntegrationTest {
         groupId,
         "テスト食材");
     authenticatedUser =
-        new UsernamePasswordAuthenticationToken(
-            new AuthenticatedUser(UUID.randomUUID()), null, List.of());
+        new UsernamePasswordAuthenticationToken(new AuthenticatedUser(memberId), null, List.of());
+    outsider =
+        new UsernamePasswordAuthenticationToken(new AuthenticatedUser(outsiderId), null, List.of());
   }
 
   @Test
@@ -113,6 +131,24 @@ class FridgeItemImageControllerTest extends AbstractIntegrationTest {
     mockMvc
         .perform(multipart("/api/v1/fridge-items/{id}/image", fridgeItemId).file(file).with(csrf()))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void uploadImageForOtherGroupsItemIsForbidden() throws Exception {
+    BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ImageIO.write(image, "jpg", out);
+    MockMultipartFile file =
+        new MockMultipartFile("file", "photo.jpg", "image/jpeg", out.toByteArray());
+
+    mockMvc
+        .perform(
+            multipart("/api/v1/fridge-items/{id}/image", fridgeItemId)
+                .file(file)
+                .with(authentication(outsider))
+                .with(csrf()))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("NOT_GROUP_MEMBER"));
   }
 
   @Test

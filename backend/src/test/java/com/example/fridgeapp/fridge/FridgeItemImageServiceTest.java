@@ -5,10 +5,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.fridgeapp.common.AppError;
+import com.example.fridgeapp.group.GroupAccessGuard;
+import com.example.fridgeapp.group.GroupException;
+import com.example.fridgeapp.group.GroupMemberRepository;
 import com.example.fridgeapp.storage.StorageService;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -26,14 +31,21 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class FridgeItemImageServiceTest {
 
+  private static final UUID GROUP_ID = UUID.randomUUID();
+  private static final UUID USER_ID = UUID.randomUUID();
+
   @Mock private FridgeItemRepository fridgeItemRepository;
+  @Mock private GroupMemberRepository groupMemberRepository;
   @Mock private StorageService storageService;
 
   private FridgeItemImageService imageService;
 
   @BeforeEach
   void setUp() {
-    imageService = new FridgeItemImageService(fridgeItemRepository, storageService);
+    imageService =
+        new FridgeItemImageService(
+            fridgeItemRepository, new GroupAccessGuard(groupMemberRepository), storageService);
+    lenient().when(groupMemberRepository.existsMember(GROUP_ID, USER_ID)).thenReturn(true);
   }
 
   @Test
@@ -46,7 +58,7 @@ class FridgeItemImageServiceTest {
     MockMultipartFile file =
         new MockMultipartFile("file", "photo.jpg", "image/jpeg", jpegBytes(1200, 900));
 
-    String result = imageService.uploadImage(id, file);
+    String result = imageService.uploadImage(USER_ID, id, file);
 
     assertThat(result).isEqualTo("new-image.jpg");
     assertThat(fridgeItem.getImagePath()).isEqualTo("new-image.jpg");
@@ -65,7 +77,7 @@ class FridgeItemImageServiceTest {
     MockMultipartFile file =
         new MockMultipartFile("file", "photo.png", "image/png", pngBytes(400, 400));
 
-    imageService.uploadImage(id, file);
+    imageService.uploadImage(USER_ID, id, file);
 
     verify(storageService).delete("old-image.png");
   }
@@ -78,10 +90,10 @@ class FridgeItemImageServiceTest {
     MockMultipartFile file =
         new MockMultipartFile("file", "big.jpg", "image/jpeg", new byte[6 * 1024 * 1024]);
 
-    assertThatThrownBy(() -> imageService.uploadImage(id, file))
+    assertThatThrownBy(() -> imageService.uploadImage(USER_ID, id, file))
         .isInstanceOf(FridgeItemException.class)
         .extracting("error")
-        .isEqualTo(com.example.fridgeapp.common.AppError.IMAGE_TOO_LARGE);
+        .isEqualTo(AppError.IMAGE_TOO_LARGE);
   }
 
   @Test
@@ -92,10 +104,10 @@ class FridgeItemImageServiceTest {
     MockMultipartFile file =
         new MockMultipartFile("file", "note.txt", "text/plain", "not an image".getBytes());
 
-    assertThatThrownBy(() -> imageService.uploadImage(id, file))
+    assertThatThrownBy(() -> imageService.uploadImage(USER_ID, id, file))
         .isInstanceOf(FridgeItemException.class)
         .extracting("error")
-        .isEqualTo(com.example.fridgeapp.common.AppError.INVALID_IMAGE_FORMAT);
+        .isEqualTo(AppError.INVALID_IMAGE_FORMAT);
   }
 
   @Test
@@ -106,10 +118,28 @@ class FridgeItemImageServiceTest {
     MockMultipartFile file =
         new MockMultipartFile("file", "photo.jpg", "image/jpeg", jpegBytes(100, 100));
 
-    assertThatThrownBy(() -> imageService.uploadImage(id, file))
+    assertThatThrownBy(() -> imageService.uploadImage(USER_ID, id, file))
         .isInstanceOf(FridgeItemException.class)
         .extracting("error")
-        .isEqualTo(com.example.fridgeapp.common.AppError.FRIDGE_ITEM_NOT_FOUND);
+        .isEqualTo(AppError.FRIDGE_ITEM_NOT_FOUND);
+  }
+
+  @Test
+  void uploadImageThrowsWhenUserIsNotMemberOfTheItemsGroup() throws Exception {
+    UUID id = UUID.randomUUID();
+    UUID outsiderId = UUID.randomUUID();
+    when(fridgeItemRepository.findById(id)).thenReturn(Optional.of(fridgeItemWithId(id)));
+    when(groupMemberRepository.existsMember(GROUP_ID, outsiderId)).thenReturn(false);
+
+    MockMultipartFile file =
+        new MockMultipartFile("file", "photo.jpg", "image/jpeg", jpegBytes(100, 100));
+
+    assertThatThrownBy(() -> imageService.uploadImage(outsiderId, id, file))
+        .isInstanceOf(GroupException.class)
+        .extracting("error")
+        .isEqualTo(AppError.NOT_GROUP_MEMBER);
+
+    verify(storageService, never()).store(any(byte[].class), anyString());
   }
 
   @Test
@@ -119,7 +149,7 @@ class FridgeItemImageServiceTest {
     fridgeItem.replaceImage("existing.jpg");
     when(fridgeItemRepository.findById(id)).thenReturn(Optional.of(fridgeItem));
 
-    imageService.deleteImage(id);
+    imageService.deleteImage(USER_ID, id);
 
     assertThat(fridgeItem.getImagePath()).isNull();
     verify(storageService).delete("existing.jpg");
@@ -132,15 +162,33 @@ class FridgeItemImageServiceTest {
     FridgeItem fridgeItem = fridgeItemWithId(id);
     when(fridgeItemRepository.findById(id)).thenReturn(Optional.of(fridgeItem));
 
-    imageService.deleteImage(id);
+    imageService.deleteImage(USER_ID, id);
 
     verify(storageService, never()).delete(anyString());
     verify(fridgeItemRepository, never()).save(any());
   }
 
+  @Test
+  void deleteImageThrowsWhenUserIsNotMemberOfTheItemsGroup() {
+    UUID id = UUID.randomUUID();
+    UUID outsiderId = UUID.randomUUID();
+    FridgeItem fridgeItem = fridgeItemWithId(id);
+    fridgeItem.replaceImage("existing.jpg");
+    when(fridgeItemRepository.findById(id)).thenReturn(Optional.of(fridgeItem));
+    when(groupMemberRepository.existsMember(GROUP_ID, outsiderId)).thenReturn(false);
+
+    assertThatThrownBy(() -> imageService.deleteImage(outsiderId, id))
+        .isInstanceOf(GroupException.class)
+        .extracting("error")
+        .isEqualTo(AppError.NOT_GROUP_MEMBER);
+
+    verify(storageService, never()).delete(anyString());
+  }
+
   private FridgeItem fridgeItemWithId(UUID id) {
     FridgeItem fridgeItem = new FridgeItem();
     ReflectionTestUtils.setField(fridgeItem, "id", id);
+    ReflectionTestUtils.setField(fridgeItem, "groupId", GROUP_ID);
     return fridgeItem;
   }
 

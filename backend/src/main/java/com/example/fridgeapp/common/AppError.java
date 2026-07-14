@@ -26,8 +26,11 @@ public enum AppError {
   JOIN_RATE_LIMITED("リクエストが多すぎます。しばらくたってから再度お試しください"),
 
   // ── Fridge Items ──────────────────────────────────────────────────────
-  // フル CRUD 関連のエラーはステップ9で追加予定。以下はステップ6の画像アップロードのみで使用。
   FRIDGE_ITEM_NOT_FOUND("冷蔵庫アイテムが見つかりません"),
+  FRIDGE_ITEM_NOT_ACTIVE("このアイテムは既に消費済みまたは削除されています"),
+  INVALID_FRIDGE_ITEM_CATEGORY("対応していないカテゴリです"),
+  CORRUPTED_FRIDGE_ITEM_CATEGORY("保存されたカテゴリの値が不正です"),
+  INSUFFICIENT_QUANTITY("消費数量がアイテムの残数を超えています"),
   INVALID_IMAGE_FORMAT("対応していない画像形式です（JPEG/PNGのみ）"),
   IMAGE_TOO_LARGE("画像サイズが5MBを超えています"),
   IMAGE_PROCESSING_FAILED("画像の処理に失敗しました"),
@@ -38,12 +41,12 @@ public enum AppError {
   STORAGE_DELETE_FAILED("ファイルの削除に失敗しました"),
   STORAGE_INVALID_PATH("不正なパスです"),
 
-// ── Shopping List ─────────────────────────────────────────────────────
-// (ステップ10で追加予定)
+  // ── Shopping List ─────────────────────────────────────────────────────
+  // (ステップ10で追加予定)
 
-// ── Food Master ───────────────────────────────────────────────────────
-// (ステップ8で追加予定)
-;
+  // ── Food Master ───────────────────────────────────────────────────────
+  FOOD_MASTER_NOT_FOUND("指定された食材マスタが見つかりません"),
+  ;
 
   private final String message;
 
