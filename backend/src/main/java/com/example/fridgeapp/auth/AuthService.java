@@ -1,6 +1,7 @@
 package com.example.fridgeapp.auth;
 
 import com.example.fridgeapp.common.AppError;
+import com.example.fridgeapp.group.GroupMemberRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -18,16 +19,19 @@ public class AuthService {
   private final JwtService jwtService;
   private final RefreshTokenService refreshTokenService;
   private final GoogleIdTokenVerifierService googleVerifier;
+  private final GroupMemberRepository groupMemberRepository;
 
   public AuthService(
       UserRepository userRepository,
       JwtService jwtService,
       RefreshTokenService refreshTokenService,
-      GoogleIdTokenVerifierService googleVerifier) {
+      GoogleIdTokenVerifierService googleVerifier,
+      GroupMemberRepository groupMemberRepository) {
     this.userRepository = userRepository;
     this.jwtService = jwtService;
     this.refreshTokenService = refreshTokenService;
     this.googleVerifier = googleVerifier;
+    this.groupMemberRepository = groupMemberRepository;
   }
 
   /**
@@ -98,6 +102,28 @@ public class AuthService {
         .findById(userId)
         .filter(u -> !u.isDeleted())
         .orElseThrow(() -> new AuthException(AppError.USER_NOT_FOUND));
+  }
+
+  /**
+   * 退会する（AUTH-05）。論理削除し、全端末のリフレッシュトークンを失効させる。
+   *
+   * <p>唯一のオーナーとなっているグループがある場合は、オーナー譲渡またはグループ削除を先に行う必要がある。
+   *
+   * @throws AuthException ユーザーが存在しない・既に退会済みの場合（{@link
+   *     AppError#USER_NOT_FOUND}）、唯一のオーナーとなっているグループがある場合（{@link
+   *     AppError#ACCOUNT_HAS_SOLE_OWNERSHIP}）
+   */
+  @Transactional
+  public void deleteAccount(UUID userId) {
+    User user = getUser(userId);
+    if (groupMemberRepository.hasSoleOwnershipOfAnyGroup(userId)) {
+      throw new AuthException(AppError.ACCOUNT_HAS_SOLE_OWNERSHIP);
+    }
+
+    user.markDeleted();
+    userRepository.save(user);
+    refreshTokenService.revokeAllForUser(userId);
+    log.info("User deleted account: id={}", userId);
   }
 
   private AuthTokens issueTokens(User user) {

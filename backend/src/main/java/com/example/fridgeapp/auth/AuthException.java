@@ -15,4 +15,8 @@ public class AuthException extends RuntimeException {
   public String getCode() {
     return error.name();
   }
+
+  public AppError getError() {
+    return error;
+  }
 }

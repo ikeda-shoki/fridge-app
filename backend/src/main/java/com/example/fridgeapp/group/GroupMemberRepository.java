@@ -50,4 +50,16 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, UUID> 
         AND m.role = :role
       """)
   long countMembersWithRole(@Param("groupId") UUID groupId, @Param("role") GroupRole role);
+
+  /** ユーザーが唯一のオーナーであるグループを 1 件でも持つか（退会時のブロック判定に使用。AUTH-05）。 */
+  @Query(
+      """
+      SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM GroupMember m
+      WHERE m.userId = :userId
+        AND m.role = com.example.fridgeapp.group.GroupRole.OWNER
+        AND (SELECT COUNT(m2) FROM GroupMember m2
+             WHERE m2.groupId = m.groupId
+               AND m2.role = com.example.fridgeapp.group.GroupRole.OWNER) = 1
+      """)
+  boolean hasSoleOwnershipOfAnyGroup(@Param("userId") UUID userId);
 }
