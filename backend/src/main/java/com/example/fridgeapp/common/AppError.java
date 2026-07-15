@@ -50,7 +50,8 @@ public enum AppError {
   STORAGE_INVALID_PATH("不正なパスです"),
 
   // ── Shopping List ─────────────────────────────────────────────────────
-  // (ステップ10で追加予定)
+  SHOPPING_ITEM_NOT_FOUND("買い物リストのアイテムが見つかりません"),
+  SHOPPING_ITEM_NOT_CHECKED("チェック済みのアイテムのみ冷蔵庫へ移動できます"),
 
   // ── Food Master ───────────────────────────────────────────────────────
   FOOD_MASTER_NOT_FOUND("指定された食材マスタが見つかりません"),

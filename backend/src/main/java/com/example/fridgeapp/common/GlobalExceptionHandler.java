@@ -3,6 +3,7 @@ package com.example.fridgeapp.common;
 import com.example.fridgeapp.auth.AuthException;
 import com.example.fridgeapp.fridge.FridgeItemException;
 import com.example.fridgeapp.group.GroupException;
+import com.example.fridgeapp.shopping.ShoppingItemException;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,19 @@ public class GlobalExceptionHandler {
           case FRIDGE_ITEM_NOT_FOUND, FOOD_MASTER_NOT_FOUND -> HttpStatus.NOT_FOUND;
           case FRIDGE_ITEM_NOT_ACTIVE -> HttpStatus.CONFLICT;
           case IMAGE_PROCESSING_FAILED -> HttpStatus.UNPROCESSABLE_CONTENT;
+          default -> HttpStatus.BAD_REQUEST;
+        };
+    return ResponseEntity.status(status)
+        .body(new ErrorResponse(ex.getError().name(), ex.getMessage()));
+  }
+
+  /** 買い物リストの業務エラーを、エラー種別に応じた 4xx へ変換する。 */
+  @ExceptionHandler(ShoppingItemException.class)
+  public ResponseEntity<ErrorResponse> handleShoppingItemException(ShoppingItemException ex) {
+    HttpStatus status =
+        switch (ex.getError()) {
+          case SHOPPING_ITEM_NOT_FOUND, FOOD_MASTER_NOT_FOUND -> HttpStatus.NOT_FOUND;
+          case SHOPPING_ITEM_NOT_CHECKED -> HttpStatus.CONFLICT;
           default -> HttpStatus.BAD_REQUEST;
         };
     return ResponseEntity.status(status)
