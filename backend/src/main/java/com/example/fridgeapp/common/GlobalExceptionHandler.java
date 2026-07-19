@@ -28,11 +28,14 @@ public class GlobalExceptionHandler {
   private static final ErrorResponse SYSTEM_ERROR =
       new ErrorResponse("SYSTEM_ERROR", "システムエラーが発生しました。しばらくたってから再度お試しください");
 
-  /** 認証エラーはすべて 401 とする。 */
+  /** 認証エラーは 401 とする。ただし退会の事前条件エラー（唯一のオーナー）は業務エラーのため 409 とする。 */
   @ExceptionHandler(AuthException.class)
   public ResponseEntity<ErrorResponse> handleAuthException(AuthException ex) {
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-        .body(new ErrorResponse(ex.getCode(), ex.getMessage()));
+    HttpStatus status =
+        ex.getError() == AppError.ACCOUNT_HAS_SOLE_OWNERSHIP
+            ? HttpStatus.CONFLICT
+            : HttpStatus.UNAUTHORIZED;
+    return ResponseEntity.status(status).body(new ErrorResponse(ex.getCode(), ex.getMessage()));
   }
 
   /** 冷蔵庫アイテムの業務エラーを、エラー種別に応じた 4xx へ変換する。 */

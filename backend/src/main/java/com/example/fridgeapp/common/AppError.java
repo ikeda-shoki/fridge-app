@@ -19,6 +19,7 @@ public enum AppError {
   INVALID_GOOGLE_TOKEN("Google IDトークンの検証に失敗しました"),
   MISSING_REFRESH_TOKEN("リフレッシュトークンが見つかりません"),
   INVALID_REFRESH_TOKEN("リフレッシュトークンが無効または期限切れです"),
+  ACCOUNT_HAS_SOLE_OWNERSHIP("退会する前に、唯一のオーナーとなっているグループのオーナーを譲渡するか、グループを削除してください"),
 
   // ── Groups ────────────────────────────────────────────────────────────
   GROUP_NOT_FOUND("グループが見つかりません"),
