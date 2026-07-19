@@ -2,7 +2,10 @@ package com.example.fridgeapp.auth;
 
 import com.example.fridgeapp.common.AppError;
 import com.example.fridgeapp.group.GroupMemberRepository;
+import com.example.fridgeapp.group.GroupRepository;
+import com.example.fridgeapp.group.GroupResponse;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,18 +23,21 @@ public class AuthService {
   private final RefreshTokenService refreshTokenService;
   private final GoogleIdTokenVerifierService googleVerifier;
   private final GroupMemberRepository groupMemberRepository;
+  private final GroupRepository groupRepository;
 
   public AuthService(
       UserRepository userRepository,
       JwtService jwtService,
       RefreshTokenService refreshTokenService,
       GoogleIdTokenVerifierService googleVerifier,
-      GroupMemberRepository groupMemberRepository) {
+      GroupMemberRepository groupMemberRepository,
+      GroupRepository groupRepository) {
     this.userRepository = userRepository;
     this.jwtService = jwtService;
     this.refreshTokenService = refreshTokenService;
     this.googleVerifier = googleVerifier;
     this.groupMemberRepository = groupMemberRepository;
+    this.groupRepository = groupRepository;
   }
 
   /**
@@ -124,6 +130,12 @@ public class AuthService {
     userRepository.save(user);
     refreshTokenService.revokeAllForUser(userId);
     log.info("User deleted account: id={}", userId);
+  }
+
+  /** ユーザーが所属する家族グループの一覧を返す（GRP-00 の判定に使用）。 */
+  @Transactional(readOnly = true)
+  public List<GroupResponse> getUserGroups(UUID userId) {
+    return groupRepository.findAllByMemberUserId(userId).stream().map(GroupResponse::from).toList();
   }
 
   private AuthTokens issueTokens(User user) {
