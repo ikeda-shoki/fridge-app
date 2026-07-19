@@ -25,5 +25,13 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    server: {
+      // Vuetify コンポーネントが内部で import する .css を Vite の変換経由で読ませる。
+      // 外部化（Node の素の ESM ローダーで直接 require/import）されると
+      // 「Unknown file extension ".css"」で失敗するため。
+      deps: {
+        inline: ['vuetify'],
+      },
+    },
   },
 })
