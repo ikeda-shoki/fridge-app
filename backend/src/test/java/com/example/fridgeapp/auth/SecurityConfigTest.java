@@ -1,9 +1,11 @@
 package com.example.fridgeapp.auth;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.fridgeapp.support.AbstractIntegrationTest;
@@ -27,6 +29,16 @@ class SecurityConfigTest extends AbstractIntegrationTest {
   @Test
   void logoutWithCsrfTokenIsAccepted() throws Exception {
     mockMvc.perform(post("/api/v1/auth/logout").with(csrf())).andExpect(status().isNoContent());
+  }
+
+  @Test
+  void csrfPrimingEndpointReturnsToken() throws Exception {
+    // SPA 起動時の priming エンドポイント。CSRF トークンを本文で返しつつ XSRF-TOKEN Cookie を発行する
+    // （Spring 公式パターン）。トークンを用いた状態変更 POST の受理自体は logoutWithCsrfTokenIsAccepted で担保する。
+    mockMvc
+        .perform(get("/api/v1/auth/csrf"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.token").isNotEmpty());
   }
 
   @Test

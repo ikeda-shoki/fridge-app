@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +30,19 @@ public class AuthController {
   public AuthController(AuthService authService, TokenCookieService tokenCookieService) {
     this.authService = authService;
     this.tokenCookieService = tokenCookieService;
+  }
+
+  /**
+   * CSRF トークンを初期化する。引数の {@link CsrfToken} を解決して返すことで {@code XSRF-TOKEN} Cookie を確実に発行する（Spring 公式の
+   * CSRF エンドポイントパターン）。
+   *
+   * <p>SPA がログインや状態変更 POST を行う前にこれを 1 度呼ぶことで、最初の POST から CSRF トークンを送れるようにする。ログイン {@code
+   * /auth/google} は CSRF 検証対象外で Cookie を発行せず、また CsrfCookieFilter による成功レスポンスへの Cookie
+   * 付与は遅延保存の都合で不安定なため、SPA は起動時にこのエンドポイントを明示的に呼んで確実に priming する。認証は不要。
+   */
+  @GetMapping("/csrf")
+  public CsrfToken primeCsrf(CsrfToken csrfToken) {
+    return csrfToken;
   }
 
   /** Google ID トークンでログインし、トークン Cookie を設定してユーザー情報を返す。 */
