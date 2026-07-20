@@ -3,7 +3,10 @@ package com.example.fridgeapp.fridge;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -18,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -149,6 +153,64 @@ class FridgeItemImageControllerTest extends AbstractIntegrationTest {
                 .with(csrf()))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("NOT_GROUP_MEMBER"));
+  }
+
+  @Test
+  void getImageReturnsUploadedImage() throws Exception {
+    uploadJpeg(fridgeItemId, authenticatedUser);
+
+    mockMvc
+        .perform(
+            get("/api/v1/fridge-items/{id}/image", fridgeItemId)
+                .with(authentication(authenticatedUser)))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.IMAGE_JPEG))
+        .andExpect(
+            header().string("Cache-Control", org.hamcrest.Matchers.containsString("private")));
+  }
+
+  @Test
+  void getImageReturnsNotFoundWhenItemHasNoImage() throws Exception {
+    mockMvc
+        .perform(
+            get("/api/v1/fridge-items/{id}/image", fridgeItemId)
+                .with(authentication(authenticatedUser)))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("FRIDGE_ITEM_IMAGE_NOT_FOUND"));
+  }
+
+  @Test
+  void getImageForOtherGroupsItemIsForbidden() throws Exception {
+    uploadJpeg(fridgeItemId, authenticatedUser);
+
+    mockMvc
+        .perform(
+            get("/api/v1/fridge-items/{id}/image", fridgeItemId).with(authentication(outsider)))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("NOT_GROUP_MEMBER"));
+  }
+
+  @Test
+  void getImageWithoutAuthenticationIsUnauthorized() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/fridge-items/{id}/image", fridgeItemId))
+        .andExpect(status().isUnauthorized());
+  }
+
+  private void uploadJpeg(UUID itemId, Authentication user) throws Exception {
+    BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ImageIO.write(image, "jpg", out);
+    MockMultipartFile file =
+        new MockMultipartFile("file", "photo.jpg", "image/jpeg", out.toByteArray());
+
+    mockMvc
+        .perform(
+            multipart("/api/v1/fridge-items/{id}/image", itemId)
+                .file(file)
+                .with(authentication(user))
+                .with(csrf()))
+        .andExpect(status().isOk());
   }
 
   @Test

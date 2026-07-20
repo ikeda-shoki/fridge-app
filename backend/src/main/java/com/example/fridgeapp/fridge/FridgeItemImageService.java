@@ -72,6 +72,36 @@ public class FridgeItemImageService {
   }
 
   /**
+   * 画像を読み出す（一覧のサムネイル表示・詳細表示用）。
+   *
+   * <p>画像そのものもグループのデータであるため、URL を知っていれば取得できる静的配信ではなく、この API 経由でメンバー認可を通す（{@code
+   * docs/security.md}「認可」）。
+   *
+   * @throws GroupException 操作ユーザーがアイテムのグループのメンバーでない場合（{@link AppError#NOT_GROUP_MEMBER}）
+   * @throws FridgeItemException アイテムが存在しない場合（{@link
+   *     AppError#FRIDGE_ITEM_NOT_FOUND}）、画像が未登録・実体が失われている・拡張子から形式を判定できない場合（{@link
+   *     AppError#FRIDGE_ITEM_IMAGE_NOT_FOUND}）
+   */
+  @Transactional(readOnly = true)
+  public FridgeItemImageContent loadImage(UUID userId, UUID fridgeItemId) {
+    FridgeItem fridgeItem = findFridgeItem(userId, fridgeItemId);
+
+    String imagePath = fridgeItem.getImagePath();
+    if (imagePath == null) {
+      throw new FridgeItemException(AppError.FRIDGE_ITEM_IMAGE_NOT_FOUND);
+    }
+    ImageFormat format =
+        ImageFormat.fromStoredPath(imagePath)
+            .orElseThrow(() -> new FridgeItemException(AppError.FRIDGE_ITEM_IMAGE_NOT_FOUND));
+    byte[] content =
+        storageService
+            .load(imagePath)
+            .orElseThrow(() -> new FridgeItemException(AppError.FRIDGE_ITEM_IMAGE_NOT_FOUND));
+
+    return new FridgeItemImageContent(content, format.contentType());
+  }
+
+  /**
    * 画像を削除する。画像が登録されていない場合は何もしない。
    *
    * @throws GroupException 操作ユーザーがアイテムのグループのメンバーでない場合（{@link AppError#NOT_GROUP_MEMBER}）

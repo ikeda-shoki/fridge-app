@@ -5,6 +5,7 @@ import com.example.fridgeapp.common.AppProperties;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -45,15 +46,34 @@ public class LocalFileStorageService implements StorageService {
   }
 
   @Override
-  public void delete(String path) {
-    Path target = basePath.resolve(path).normalize();
-    if (!target.startsWith(basePath)) {
-      throw new StorageException(AppError.STORAGE_INVALID_PATH);
+  public Optional<byte[]> load(String path) {
+    Path target = resolveWithinBase(path);
+    if (!Files.exists(target)) {
+      return Optional.empty();
     }
+    try {
+      return Optional.of(Files.readAllBytes(target));
+    } catch (IOException e) {
+      throw new StorageException(AppError.STORAGE_READ_FAILED, e);
+    }
+  }
+
+  @Override
+  public void delete(String path) {
+    Path target = resolveWithinBase(path);
     try {
       Files.deleteIfExists(target);
     } catch (IOException e) {
       throw new StorageException(AppError.STORAGE_DELETE_FAILED, e);
     }
+  }
+
+  /** パスを正規化し、ベースディレクトリ配下であることを検証する（{@code ../} によるディレクトリトラバーサル防止）。 */
+  private Path resolveWithinBase(String path) {
+    Path target = basePath.resolve(path).normalize();
+    if (!target.startsWith(basePath)) {
+      throw new StorageException(AppError.STORAGE_INVALID_PATH);
+    }
+    return target;
   }
 }
