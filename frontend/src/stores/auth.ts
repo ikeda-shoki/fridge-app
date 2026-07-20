@@ -17,6 +17,13 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => user.value !== null)
 
   /**
+   * 現在表示対象の家族グループ。所属していなければ null。
+   *
+   * 複数グループの切り替え（GRP-00 補足）はステップ18 で対応するため、現時点では先頭のグループを既定として扱う。
+   */
+  const currentGroup = computed(() => user.value?.groups[0] ?? null)
+
+  /**
    * Google ID トークンでログインする（AUTH-01）。
    * 成功するとバックエンドがトークン Cookie を発行し、ユーザー情報がストアに反映される。
    */
@@ -41,11 +48,25 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  /** ログアウトする（AUTH-02）。サーバー側のリフレッシュトークン失効と Cookie 削除の後、ストアの状態も破棄する。 */
+  /**
+   * ログアウトする（AUTH-02）。サーバー側のリフレッシュトークン失効と Cookie 削除を試みる。
+   * サーバー呼び出しが失敗しても、クライアント側のログイン状態は必ず破棄する（ユーザーがログアウトできない状態に陥らせない）。
+   */
   async function logout(): Promise<void> {
-    await httpClient.post('/auth/logout')
-    user.value = null
+    try {
+      await httpClient.post('/auth/logout')
+    } finally {
+      user.value = null
+    }
   }
 
-  return { user, isInitialized, isAuthenticated, loginWithGoogle, fetchMe, logout }
+  return {
+    user,
+    isInitialized,
+    isAuthenticated,
+    currentGroup,
+    loginWithGoogle,
+    fetchMe,
+    logout,
+  }
 })
