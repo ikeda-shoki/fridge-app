@@ -43,10 +43,12 @@ public enum AppError {
   INVALID_IMAGE_FORMAT("対応していない画像形式です（JPEG/PNGのみ）"),
   IMAGE_TOO_LARGE("画像サイズが5MBを超えています"),
   IMAGE_PROCESSING_FAILED("画像の処理に失敗しました"),
+  FRIDGE_ITEM_IMAGE_NOT_FOUND("このアイテムには画像が登録されていません"),
 
   // ── Storage ───────────────────────────────────────────────────────────
   STORAGE_DIRECTORY_CREATE_FAILED("ストレージディレクトリの作成に失敗しました"),
   STORAGE_WRITE_FAILED("ファイルの保存に失敗しました"),
+  STORAGE_READ_FAILED("ファイルの読み出しに失敗しました"),
   STORAGE_DELETE_FAILED("ファイルの削除に失敗しました"),
   STORAGE_INVALID_PATH("不正なパスです"),
 

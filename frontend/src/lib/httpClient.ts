@@ -14,6 +14,21 @@ export const httpClient = axios.create({
   withXSRFToken: true,
 })
 
+/**
+ * CSRF トークンを初期化する（`XSRF-TOKEN` Cookie を発行させる）。
+ *
+ * ログイン（`/auth/google`）は CSRF 検証対象外で Cookie を発行しないため、これを呼ばないと
+ * 最初の状態変更リクエスト（ログアウト・グループ作成など）が 403 になる。アプリ起動時に一度呼ぶ。
+ * 失敗してもアプリ起動は妨げない（後続リクエストが 403 になったら都度対処する）。
+ */
+export async function primeCsrfToken(): Promise<void> {
+  try {
+    await httpClient.get('/auth/csrf')
+  } catch {
+    // 起動をブロックしない
+  }
+}
+
 let refreshPromise: Promise<void> | null = null
 
 /** アクセストークン切れ（401）時に一度だけリフレッシュする。同時多発リクエストではリフレッシュ処理を共有する。 */

@@ -38,6 +38,27 @@ class LocalFileStorageServiceTest {
   }
 
   @Test
+  void loadReturnsStoredContent() {
+    byte[] content = "dummy-image-bytes".getBytes();
+    String path = storageService.store(content, "jpg");
+
+    assertThat(storageService.load(path)).contains(content);
+  }
+
+  @Test
+  void loadReturnsEmptyWhenFileDoesNotExist() {
+    assertThat(storageService.load("does-not-exist.jpg")).isEmpty();
+  }
+
+  @Test
+  void loadRejectsPathTraversalAttempt() {
+    assertThatThrownBy(() -> storageService.load("../outside.jpg"))
+        .isInstanceOf(StorageException.class)
+        .extracting("error")
+        .isEqualTo(AppError.STORAGE_INVALID_PATH);
+  }
+
+  @Test
   void deleteRemovesStoredFile() {
     String path = storageService.store("content".getBytes(), "png");
 

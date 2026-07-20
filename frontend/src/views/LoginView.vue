@@ -35,7 +35,7 @@ async function handleCredential(idToken: string): Promise<void> {
 <template>
   <v-container class="d-flex flex-column justify-center fill-height text-center" fluid>
     <v-icon icon="mdi-fridge-outline" size="64" color="primary" class="mb-4 mx-auto" />
-    <h1 class="text-h5 mb-6">冷蔵庫アプリ</h1>
+    <h1 class="font-pop text-h4 font-weight-bold mb-6">冷蔵庫アプリ</h1>
     <div ref="buttonContainer" class="d-flex justify-center"></div>
     <v-alert v-if="errorMessage" type="error" variant="tonal" class="mt-4 mx-4" density="compact">
       {{ errorMessage }}

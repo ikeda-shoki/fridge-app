@@ -51,7 +51,7 @@ async function submit(): Promise<void> {
 <template>
   <v-container class="d-flex flex-column justify-center fill-height text-center">
     <v-icon icon="mdi-account-group-outline" size="64" color="primary" class="mb-4 mx-auto" />
-    <h1 class="text-h5 mb-2">ようこそ！</h1>
+    <h1 class="font-pop text-h4 font-weight-bold mb-2">ようこそ！</h1>
     <p class="text-body-2 mb-6">
       まだどの家族グループにも参加していません。<br />
       新しく作るか、招待コードで参加しましょう。

@@ -7,3 +7,13 @@
 body {
   margin: 0;
 }
+
+/* ポップな丸ゴシックの見出し用ユーティリティ。アプリ名やヘッダーに使う。 */
+.font-pop {
+  font-family:
+    'M PLUS Rounded 1c',
+    system-ui,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}

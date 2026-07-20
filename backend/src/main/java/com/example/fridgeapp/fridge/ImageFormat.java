@@ -2,23 +2,46 @@ package com.example.fridgeapp.fridge;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.Optional;
 import org.springframework.web.multipart.MultipartFile;
 
 /** マジックバイトで検証済みの受付画像形式（ADR-007: WebP は未対応）。 */
 enum ImageFormat {
-  JPEG("jpg"),
-  PNG("png");
+  JPEG("jpg", "image/jpeg"),
+  PNG("png", "image/png");
 
   private final String extension;
+  private final String contentType;
 
-  ImageFormat(String extension) {
+  ImageFormat(String extension, String contentType) {
     this.extension = extension;
+    this.contentType = contentType;
   }
 
   /** 保存時に使う拡張子。 */
   String extension() {
     return extension;
+  }
+
+  /** 配信時に返す Content-Type。 */
+  String contentType() {
+    return contentType;
+  }
+
+  /**
+   * 保存済みパス（{@code {UUID}.jpg} 形式）の拡張子から画像形式を引く。判定できない場合は空を返す。
+   *
+   * <p>保存時にマジックバイトで判定した形式の拡張子しか付けないため、ここでは拡張子を信頼してよい。
+   */
+  static Optional<ImageFormat> fromStoredPath(String path) {
+    int dotIndex = path.lastIndexOf('.');
+    if (dotIndex < 0) {
+      return Optional.empty();
+    }
+    String extension = path.substring(dotIndex + 1).toLowerCase(Locale.ROOT);
+    return Arrays.stream(values()).filter(format -> format.extension.equals(extension)).findFirst();
   }
 
   /**

@@ -43,7 +43,8 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleFridgeItemException(FridgeItemException ex) {
     HttpStatus status =
         switch (ex.getError()) {
-          case FRIDGE_ITEM_NOT_FOUND, FOOD_MASTER_NOT_FOUND -> HttpStatus.NOT_FOUND;
+          case FRIDGE_ITEM_NOT_FOUND, FRIDGE_ITEM_IMAGE_NOT_FOUND, FOOD_MASTER_NOT_FOUND ->
+              HttpStatus.NOT_FOUND;
           case FRIDGE_ITEM_NOT_ACTIVE -> HttpStatus.CONFLICT;
           case IMAGE_PROCESSING_FAILED -> HttpStatus.UNPROCESSABLE_CONTENT;
           default -> HttpStatus.BAD_REQUEST;

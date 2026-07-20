@@ -72,4 +72,18 @@ describe('useAuthStore', () => {
     expect(store.user).toBeNull()
     expect(store.isAuthenticated).toBe(false)
   })
+
+  it('logout: サーバー呼び出しが失敗してもローカルの user は破棄する', async () => {
+    const store = useAuthStore()
+    vi.mocked(httpClient.get).mockResolvedValue({
+      data: { id: 'u1', displayName: '太郎', avatarUrl: null, groups: [] },
+    })
+    await store.fetchMe()
+    vi.mocked(httpClient.post).mockRejectedValue(new Error('403'))
+
+    await expect(store.logout()).rejects.toThrow()
+
+    expect(store.user).toBeNull()
+    expect(store.isAuthenticated).toBe(false)
+  })
 })
