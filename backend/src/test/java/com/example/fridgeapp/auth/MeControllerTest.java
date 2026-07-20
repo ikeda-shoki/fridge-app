@@ -100,6 +100,32 @@ class MeControllerTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void getMeReturnsUserInfoWithGroups() throws Exception {
+    UUID groupId = UUID.randomUUID();
+    jdbcTemplate.update("INSERT INTO groups (id, name) VALUES (?, ?)", groupId, "我が家");
+    jdbcTemplate.update(
+        "INSERT INTO group_members (group_id, user_id, role) VALUES (?, ?, 'OWNER')",
+        groupId,
+        userId);
+
+    mockMvc
+        .perform(get("/api/v1/me").with(authentication(userAuth)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.displayName").value("テスト太郎"))
+        .andExpect(jsonPath("$.groups", org.hamcrest.Matchers.hasSize(1)))
+        .andExpect(jsonPath("$.groups[0].id").value(groupId.toString()))
+        .andExpect(jsonPath("$.groups[0].name").value("我が家"));
+  }
+
+  @Test
+  void getMeReturnsEmptyGroupsWhenUserHasNoGroup() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/me").with(authentication(userAuth)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.groups", org.hamcrest.Matchers.hasSize(0)));
+  }
+
+  @Test
   void deletedUserCannotAccessMeAnymore() throws Exception {
     mockMvc
         .perform(delete("/api/v1/me").with(authentication(userAuth)).with(csrf()))

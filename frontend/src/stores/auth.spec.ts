@@ -20,7 +20,7 @@ describe('useAuthStore', () => {
   it('fetchMe: ログイン中なら user を反映し isAuthenticated が true になる', async () => {
     const store = useAuthStore()
     vi.mocked(httpClient.get).mockResolvedValue({
-      data: { id: 'u1', displayName: '太郎', avatarUrl: null },
+      data: { id: 'u1', displayName: '太郎', avatarUrl: null, groups: [] },
     })
 
     await store.fetchMe()
@@ -44,7 +44,12 @@ describe('useAuthStore', () => {
   it('loginWithGoogle: レスポンスのユーザー情報をストアへ反映する', async () => {
     const store = useAuthStore()
     vi.mocked(httpClient.post).mockResolvedValue({
-      data: { id: 'u2', displayName: '花子', avatarUrl: 'https://example.com/a.png' },
+      data: {
+        id: 'u2',
+        displayName: '花子',
+        avatarUrl: 'https://example.com/a.png',
+        groups: [{ id: 'g1', name: '我が家' }],
+      },
     })
 
     await store.loginWithGoogle('dummy-id-token')
@@ -57,7 +62,7 @@ describe('useAuthStore', () => {
   it('logout: サーバー呼び出し成功後に user をクリアする', async () => {
     const store = useAuthStore()
     vi.mocked(httpClient.get).mockResolvedValue({
-      data: { id: 'u1', displayName: '太郎', avatarUrl: null },
+      data: { id: 'u1', displayName: '太郎', avatarUrl: null, groups: [] },
     })
     await store.fetchMe()
     vi.mocked(httpClient.post).mockResolvedValue({})

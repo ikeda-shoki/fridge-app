@@ -1,9 +1,11 @@
 package com.example.fridgeapp.auth;
 
 import com.example.fridgeapp.common.AppError;
+import com.example.fridgeapp.group.GroupResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,7 +36,8 @@ public class AuthController {
       @Valid @RequestBody GoogleLoginRequest request, HttpServletResponse response) {
     LoginResult result = authService.loginWithGoogle(request.idToken());
     setTokenCookies(response, result.tokens());
-    return ResponseEntity.ok(UserResponse.from(result.user()));
+    List<GroupResponse> groups = authService.getUserGroups(result.user().getId());
+    return ResponseEntity.ok(UserResponse.from(result.user(), groups));
   }
 
   /**

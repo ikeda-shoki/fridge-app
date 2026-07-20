@@ -7,7 +7,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.example.fridgeapp.common.AppError;
+import com.example.fridgeapp.group.Group;
 import com.example.fridgeapp.group.GroupMemberRepository;
+import com.example.fridgeapp.group.GroupRepository;
+import com.example.fridgeapp.group.GroupResponse;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +29,7 @@ class AuthServiceTest {
   @Mock private RefreshTokenService refreshTokenService;
   @Mock private GoogleIdTokenVerifierService googleVerifier;
   @Mock private GroupMemberRepository groupMemberRepository;
+  @Mock private GroupRepository groupRepository;
 
   private AuthService authService;
 
@@ -32,7 +37,12 @@ class AuthServiceTest {
   void setUp() {
     authService =
         new AuthService(
-            userRepository, jwtService, refreshTokenService, googleVerifier, groupMemberRepository);
+            userRepository,
+            jwtService,
+            refreshTokenService,
+            googleVerifier,
+            groupMemberRepository,
+            groupRepository);
   }
 
   @Test
@@ -88,6 +98,28 @@ class AuthServiceTest {
         .isInstanceOf(AuthException.class)
         .extracting("error")
         .isEqualTo(AppError.USER_NOT_FOUND);
+  }
+
+  @Test
+  void getUserGroupsReturnsGroupsUserBelongsTo() {
+    UUID userId = UUID.randomUUID();
+    Group group = new Group("我が家");
+    ReflectionTestUtils.setField(group, "id", UUID.randomUUID());
+    when(groupRepository.findAllByMemberUserId(userId)).thenReturn(List.of(group));
+
+    List<GroupResponse> groups = authService.getUserGroups(userId);
+
+    assertThat(groups).containsExactly(GroupResponse.from(group));
+  }
+
+  @Test
+  void getUserGroupsReturnsEmptyListWhenUserBelongsToNoGroup() {
+    UUID userId = UUID.randomUUID();
+    when(groupRepository.findAllByMemberUserId(userId)).thenReturn(List.of());
+
+    List<GroupResponse> groups = authService.getUserGroups(userId);
+
+    assertThat(groups).isEmpty();
   }
 
   private User activeUser(UUID userId) {

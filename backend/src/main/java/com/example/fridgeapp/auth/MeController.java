@@ -1,6 +1,8 @@
 package com.example.fridgeapp.auth;
 
+import com.example.fridgeapp.group.GroupResponse;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,11 +24,12 @@ public class MeController {
     this.tokenCookieService = tokenCookieService;
   }
 
-  /** ログイン中のユーザー情報を返す。 */
+  /** ログイン中のユーザー情報と所属グループ一覧を返す（GRP-00 の判定に使用）。 */
   @GetMapping
   public ResponseEntity<UserResponse> getMe(@AuthenticationPrincipal AuthenticatedUser principal) {
     User user = authService.getUser(principal.userId());
-    return ResponseEntity.ok(UserResponse.from(user));
+    List<GroupResponse> groups = authService.getUserGroups(principal.userId());
+    return ResponseEntity.ok(UserResponse.from(user, groups));
   }
 
   /** 退会する（AUTH-05）。論理削除後、トークン Cookie を削除してセッションを終了させる。 */
